@@ -1,0 +1,12 @@
+package(default_visibility = ["//visibility:public"])
+
+scala_library(
+    name = "process",
+    srcs = ["//depfixer/src/main/java/com/wix/bazel/process:sources"],
+)
+
+filegroup(
+    name = "sources",
+    srcs = glob(["*.java"]),
+    visibility = ["//depfixer/src/main/java/com/wix/bazel/process:__pkg__"],
+)
