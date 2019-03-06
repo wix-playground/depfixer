@@ -34,6 +34,10 @@ public class InternalRepoFileVisitor extends SimpleFileVisitor<Path> {
         if (attrs.isRegularFile() && isCodeJar(file)) {
             String target = getTargetName(file);
 
+            if (target == null) {
+                return FileVisitResult.CONTINUE;
+            }
+
             JarFileProcessor.addClassesToCache(file, target, classToTarget);
         }
 
@@ -57,7 +61,7 @@ public class InternalRepoFileVisitor extends SimpleFileVisitor<Path> {
         return relTarget.toString().startsWith("external/") && runMode == RunMode.ISOLATED;
     }
 
-    private String getTargetName(Path file) {
+    private String getTargetName(Path file) throws IOException {
         Path relTarget = start.relativize(file);
 
         boolean external = relTarget.toString().startsWith("external/");
@@ -90,9 +94,35 @@ public class InternalRepoFileVisitor extends SimpleFileVisitor<Path> {
                 start.resolve(targetPath).relativize(file).toString();
         String fileTargetName = fileName.replace("_java", "").replace(".jar", "");
 
+        if (targetDoesNotExist(repoRootPath.resolve(targetPath), fileTargetName)) {
+            return null;
+        }
+
         return  external ?
                 String.format("@%s:%s", targetPath, fileTargetName).replaceFirst("/", "//") :
                 String.format("//%s:%s", targetPath, fileTargetName);
+    }
+
+    private boolean targetDoesNotExist(Path packagePath, String targetName) throws IOException {
+        return !targetExist(packagePath, targetName);
+    }
+
+    private boolean targetExist(Path packagePath, String targetName) throws IOException {
+        if (!targetName.contains("/")) {
+            return true;
+        }
+
+        Path buildFile = packagePath.resolve("BUILD.bazel");
+
+        if (!Files.isRegularFile(buildFile))
+            buildFile = packagePath.resolve("BUILD");
+
+        if (!Files.isRegularFile(buildFile))
+            return false;
+
+        String buildFileContent = new String(Files.readAllBytes(buildFile));
+
+        return buildFileContent.contains(String.format("\"%s\"", targetName));
     }
 
     private boolean isCodeJar(Path file) {
