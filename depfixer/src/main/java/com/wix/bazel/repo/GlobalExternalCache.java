@@ -2,6 +2,7 @@ package com.wix.bazel.repo;
 
 import com.wix.bazel.process.RunWithRetries;
 import com.wix.bazel.runmode.RunMode;
+import com.wixpress.ci.labeldex.domain.SymbolType;
 import com.wixpress.ci.labeldex.model.BulkLabels;
 import com.wixpress.ci.labeldex.model.BulkSymbols;
 import com.wixpress.ci.labeldex.model.Label;
@@ -10,6 +11,7 @@ import com.wixpress.ci.labeldex.model.BazelLabels;
 import com.wixpress.ci.labeldex.model.SecondPartyLabel;
 import com.wixpress.ci.labeldex.model.ThirdPartyLabel;
 import com.wixpress.ci.labeldex.restclient.LabeldexRestClient;
+import com.wixpress.ci.labeldex.domain.SymbolType.*;
 import com.wixpress.ci.rest.client.RestClient;
 import scala.Option;
 import scala.collection.JavaConverters;
@@ -57,7 +59,7 @@ public class GlobalExternalCache {
                 RunWithRetries.run(5, 500L, () -> labeldexrestClient.findBulkLabels(symbols));
         List<SymbolLabels> symbolLabels = JavaConverters.bufferAsJavaList(clientLabels.symbolDocument().toBuffer());
 
-        symbolLabels.forEach(s -> {
+        symbolLabels.stream().filter(l -> l.symbol().symbolType() != SymbolType.PACKAGE()).forEach(s -> {
             Supplier<Stream<Label>> labelsStreamSupplier = () -> JavaConverters.setAsJavaSet(s.labels()).stream()
                     .filter(l -> !l.workspace().equals(srcWorkspaceName));
 
