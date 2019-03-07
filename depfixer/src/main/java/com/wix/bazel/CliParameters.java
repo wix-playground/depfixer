@@ -51,7 +51,7 @@ public class CliParameters {
             int runLimit = getOptionValue(cliParameters, "runLimit",
                     Integer::parseInt, Integer.MAX_VALUE);
             RunMode runMode = getOptionValue(cliParameters, "mode",
-                    RunMode::valueOf, RunMode.SOCIAL);
+                    RunMode::valueOf, RunMode.ISOLATED);
 
             return new CliParameters(repoPath, targets, outputDir, runLimit, runMode);
 
