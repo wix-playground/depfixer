@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.Set;
 
 public class RepoCacheBuilder {
+    private InternalRepoFileVisitor fileVisitor;
     private final Path repoPath;
 
     public RepoCacheBuilder(Path repoPath) {
@@ -32,13 +33,19 @@ public class RepoCacheBuilder {
                                    Set<String> testOnlyTargets,
                                    String workspaceName,
                                    RunMode runMode) throws IOException {
-        InternalRepoFileVisitor fileVisitor = new InternalRepoFileVisitor(
-                bazelOutPath,
-                repoPath,
-                bazelExternalPath,
-                testOnlyTargets,
-                workspaceName,
-                runMode);
+
+        synchronized (this) {
+            if (fileVisitor == null) {
+                fileVisitor = new InternalRepoFileVisitor(
+                        bazelOutPath,
+                        repoPath,
+                        bazelExternalPath,
+                        testOnlyTargets,
+                        workspaceName,
+                        runMode);
+            }
+        }
+
         Files.walkFileTree(bazelOutPath, fileVisitor);
 
         return fileVisitor.getClassToTarget();

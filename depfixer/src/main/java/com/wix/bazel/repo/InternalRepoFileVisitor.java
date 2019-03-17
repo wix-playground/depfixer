@@ -7,6 +7,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class InternalRepoFileVisitor extends SimpleFileVisitor<Path> {
@@ -14,6 +17,7 @@ public class InternalRepoFileVisitor extends SimpleFileVisitor<Path> {
     private final RepoCache classToTarget;
     private final Path start, repoRoot, externalPath;
     private final RunMode runMode;
+    private final Set<CodeJar> cachedJars;
 
     public InternalRepoFileVisitor(Path start,
                                    Path repoRoot,
@@ -27,11 +31,18 @@ public class InternalRepoFileVisitor extends SimpleFileVisitor<Path> {
         this.classToTarget = new RepoCache(testTarget);
         this.workspaceName = workspaceName;
         this.runMode = runMode;
+        this.cachedJars = new HashSet<>();
     }
 
     @Override
     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         if (attrs.isRegularFile() && isCodeJar(file)) {
+            CodeJar codeJar = new CodeJar(file, attrs);
+
+            if (cachedJars.contains(codeJar)) {
+                return FileVisitResult.CONTINUE;
+            }
+
             String target = getTargetName(file);
 
             if (target == null) {
@@ -39,6 +50,7 @@ public class InternalRepoFileVisitor extends SimpleFileVisitor<Path> {
             }
 
             JarFileProcessor.addClassesToCache(file, target, classToTarget);
+            cachedJars.add(codeJar);
         }
 
         return FileVisitResult.CONTINUE;
@@ -139,5 +151,29 @@ public class InternalRepoFileVisitor extends SimpleFileVisitor<Path> {
 
     public RepoCache getClassToTarget() {
         return classToTarget;
+    }
+
+    private static class CodeJar {
+        final String path;
+        final FileTime lastModifiedTime;
+
+        CodeJar(Path jar, BasicFileAttributes attrs) throws IOException {
+            path = jar.toAbsolutePath().toString();
+            lastModifiedTime = attrs.lastModifiedTime();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CodeJar codeJar = (CodeJar) o;
+            return Objects.equals(path, codeJar.path) &&
+                    Objects.equals(lastModifiedTime, codeJar.lastModifiedTime);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(path, lastModifiedTime);
+        }
     }
 }
