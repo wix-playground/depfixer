@@ -6,7 +6,6 @@ scala_library(
     deps = [
         "//depfixer/src/main/java/com/wix/bazel/process",
         "//depfixer/src/main/java/com/wix/bazel/brokentarget",
-        "//depfixer/src/main/java/com/wix/bazel/trace",
         "//depfixer/src/main/resources",
         "//depfixer/src/main/java/com/wix/bazel/runmode",
         "@com_wixpress_ci_labeldex_rest_client",

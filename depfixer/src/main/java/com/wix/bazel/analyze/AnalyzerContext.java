@@ -1,6 +1,5 @@
 package com.wix.bazel.analyze;
 
-import com.wix.bazel.trace.AnalysisTracer;
 import com.wix.bazel.repo.RepoCache;
 
 import java.nio.file.Path;
@@ -13,7 +12,6 @@ public class AnalyzerContext {
     private int runNumber = 0;
     private Set<String> targetHistory;
     private Map<String, String> fileToContentMap;
-    private AnalysisTracer analysisTracer;
 
     private Path repoPath, bazelExternalPath, bazelOutPath;
 
@@ -59,14 +57,6 @@ public class AnalyzerContext {
 
     public void incrementRunNumber() {
         this.runNumber += 1;
-    }
-
-    public AnalysisTracer getAnalysisTracer() {
-        return analysisTracer;
-    }
-
-    public void setAnalysisTracer(AnalysisTracer analysisTracer) {
-        this.analysisTracer = analysisTracer;
     }
 
     public Path getBazelExternalPath() {

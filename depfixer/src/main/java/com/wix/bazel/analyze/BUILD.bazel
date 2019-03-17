@@ -6,7 +6,6 @@ scala_library(
     deps = [
         "//depfixer/src/main/java/com/wix/bazel/brokentarget",
         "//depfixer/src/main/java/com/wix/bazel/repo",
-        "//depfixer/src/main/java/com/wix/bazel/trace",
     ],
 )
 

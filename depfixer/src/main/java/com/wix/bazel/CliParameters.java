@@ -109,7 +109,7 @@ public class CliParameters {
             "targets");
 
     private static Option cliOutputDir = createOption("outputDir",
-            "Output Directory, if not specified, a temp directory will be used",
+            "Output Directory, if not specified, outputs will be written to ~/.depfixer/<repo name>",
             "outputDir");
 
     private static Option cliRunLimit = createOption("runLimit",
@@ -117,7 +117,7 @@ public class CliParameters {
             "runLimit");
 
     private static Option cliRunMode = createOption("runMode",
-            "Valid values are, `SOCIAL` `PARTIAL` `ISOLATED`, default is `SOCIAL`",
+            "Valid values are, `SOCIAL` `PARTIAL` `ISOLATED`, default is `ISOLATED`",
             "mode");
 
     private static Option createOption(String argName, String description, String optionName) {
