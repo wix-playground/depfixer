@@ -31,6 +31,7 @@ public class CliParameters {
         return new CliParameters();
     }
 
+
     public static CliParameters parseCliParameters(String[] args) {
 
         Options cliOptions = new Options();
