@@ -54,6 +54,7 @@ public class BrokenTargetExtractor {
         while (matcher.find()) {
             BrokenTargetData data = new BrokenTargetData();
             data.targetName = matcher.group(1);
+            data.targetName = data.targetName.split("\\s",2)[0];
 
             System.out.println("Found target: " + data.targetName);
 
