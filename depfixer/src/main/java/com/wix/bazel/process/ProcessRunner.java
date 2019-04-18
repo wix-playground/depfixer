@@ -47,4 +47,8 @@ public class ProcessRunner {
     public static void shutdownNow() {
         executorService.shutdownNow();
     }
+
+    public static void shutdown() {
+        executorService.shutdown();
+    }
 }

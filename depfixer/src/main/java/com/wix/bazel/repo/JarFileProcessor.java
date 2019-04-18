@@ -3,6 +3,8 @@ package com.wix.bazel.repo;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -22,7 +24,7 @@ public class JarFileProcessor {
                         .replace("`", "")
                         .replace('/', '.')
                         .replaceAll("\\$([^$]+)?", ".$1");
-                cache.put(fqn, target);
+                cache.put(file.toString(), fqn, target);
             }
         }
     }

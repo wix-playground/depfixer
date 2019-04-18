@@ -2,13 +2,29 @@ package com.wix.bazel.repo;
 
 import com.wix.bazel.brokentarget.BrokenTargetData;
 
+import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class TargetsHolder {
-    private String testTarget;
-    private Set<String> prodTargets = new HashSet<>();
+public class TargetsHolder implements Serializable {
+    private TargetWrapper testTarget;
+    private Set<TargetWrapper> prodTargets = new HashSet<>();
+
+    void clear(String jar) {
+        if (testTarget != null && jar.equals(testTarget.srcjar)) {
+            testTarget = null;
+        }
+
+        prodTargets = prodTargets.stream()
+                .filter(x -> !jar.equals(x.srcjar)).collect(Collectors.toSet());
+    }
+
+    boolean isEmpty() {
+        return testTarget == null && prodTargets.isEmpty();
+    }
 
     String getTarget(BrokenTargetData forTarget) {
         String target = getTargetInternal(forTarget);
@@ -19,7 +35,6 @@ public class TargetsHolder {
         if (target == null) {
             return null;
         }
-
 
         if (forTarget.getName().equals(target) || target.endsWith(forTarget.getName())) {
             return null;
@@ -46,16 +61,16 @@ public class TargetsHolder {
 
     private String getTargetInternal(BrokenTargetData forTarget) {
         if (forTarget.isTestOnly()) {
-            Optional<String> maybeProdTarget = prodTargets.stream().findFirst();
-            return maybeProdTarget.orElseGet(() -> testTarget);
+            Optional<TargetWrapper> maybeProdTarget = prodTargets.stream().findFirst();
+            return or(maybeProdTarget, Optional.ofNullable(testTarget)).map(TargetWrapper::target).orElse(null);
         }
 
         if (prodTargets.isEmpty()) {
             return null;
         }
 
-        Optional<String> maybeProdTarget = prodTargets.stream().filter(t -> !targetIsImplicitTest(t)).findFirst();
-        return maybeProdTarget.orElse((prodTargets.stream().findFirst()).orElse(null));
+        Optional<TargetWrapper> maybeProdTarget = prodTargets.stream().filter(t -> !targetIsImplicitTest(t.target)).findFirst();
+        return or(maybeProdTarget, prodTargets.stream().findFirst()).map(TargetWrapper::target).orElse(null);
     }
 
     private static boolean targetIsImplicitTest(String target) {
@@ -65,11 +80,28 @@ public class TargetsHolder {
                 || target.contains("/it/");
     }
 
-    public void setTestTarget(String target) {
-        this.testTarget = target;
+    public void setTestTarget(String srcjar, String target) {
+        this.testTarget = new TargetWrapper(srcjar, target);
     }
 
-    public void setProdTarget(String target) {
-        this.prodTargets.add(target);
+    public void setProdTarget(String srcjar, String target) {
+        this.prodTargets.add(new TargetWrapper(srcjar, target));
+    }
+
+    private static <T> Optional<T> or(Optional<T> first, Optional<T> second) {
+        return first.isPresent() ? first : second;
+    }
+
+    private static final class TargetWrapper implements Serializable {
+        String srcjar, target;
+
+        public TargetWrapper(String srcjar, String target) {
+            this.srcjar = srcjar;
+            this.target = target;
+        }
+
+        public String target() {
+            return target;
+        }
     }
 }

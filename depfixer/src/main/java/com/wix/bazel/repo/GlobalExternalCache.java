@@ -97,7 +97,7 @@ public class GlobalExternalCache {
                     .filter(Objects::nonNull)
                     .findFirst();
 
-            maybeLabels.ifPresent(strings -> strings.forEach(l -> cache.put(fqn, l)));
+            maybeLabels.ifPresent(strings -> strings.forEach(l -> cache.put(null, fqn, l)));
         }
     }
 

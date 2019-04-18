@@ -3,6 +3,7 @@ package com.wix.bazel;
 import com.wix.bazel.runmode.RunMode;
 import org.apache.commons.cli.*;
 
+import java.nio.file.Paths;
 import java.util.function.Function;
 
 public class CliParameters {
@@ -12,6 +13,7 @@ public class CliParameters {
     private String outputDir;
     private int runLimit;
     private RunMode runMode;
+    private String indexDir;
 
     private CliParameters() {}
 
@@ -19,12 +21,14 @@ public class CliParameters {
                           String targets,
                           String outputDir,
                           int runLimit,
-                          RunMode runMode) {
+                          RunMode runMode,
+                          String indexDir) {
         this.repoPath = repoPath;
         this.targets = targets;
         this.outputDir = outputDir;
         this.runLimit = runLimit;
         this.runMode = runMode;
+        this.indexDir = indexDir;
     }
 
     private static CliParameters empty() {
@@ -40,11 +44,14 @@ public class CliParameters {
         cliOptions.addOption(cliOutputDir);
         cliOptions.addOption(cliRunLimit);
         cliOptions.addOption(cliRunMode);
+        cliOptions.addOption(cliIndexDir);
 
         try {
 
             CommandLineParser parser = new BasicParser();
             CommandLine cliParameters = parser.parse(cliOptions, args);
+
+            String defaultIndexDir = Paths.get(System.getProperty("user.home"), ".depfixer-index").toAbsolutePath().toString();
 
             String repoPath = getOptionValue(cliParameters, "repo");
             String targets = getOptionValue(cliParameters, "targets");
@@ -53,8 +60,9 @@ public class CliParameters {
                     Integer::parseInt, Integer.MAX_VALUE);
             RunMode runMode = getOptionValue(cliParameters, "mode",
                     RunMode::valueOf, RunMode.ISOLATED);
+            String indexDir = getOptionValue(cliParameters,"indexDir", Function.identity(), defaultIndexDir);
 
-            return new CliParameters(repoPath, targets, outputDir, runLimit, runMode);
+            return new CliParameters(repoPath, targets, outputDir, runLimit, runMode, indexDir);
 
         } catch (Exception ex) {
             printHelp(cliOptions);
@@ -101,6 +109,10 @@ public class CliParameters {
         return runMode;
     }
 
+    public String getIndexDir() {
+        return indexDir;
+    }
+
     private static Option cliRepo = createOption("repoPath",
             "Path to repo - default is current repo",
             "repo");
@@ -120,6 +132,10 @@ public class CliParameters {
     private static Option cliRunMode = createOption("runMode",
             "Valid values are, `SOCIAL` `PARTIAL` `ISOLATED`, default is `ISOLATED`",
             "mode");
+
+    private static Option cliIndexDir = createOption("indexDir",
+            "Path to save different indexes",
+            "indexDir");
 
     private static Option createOption(String argName, String description, String optionName) {
         OptionBuilder.withArgName(argName);
