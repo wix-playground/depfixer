@@ -40,7 +40,7 @@ public class ExternalRepoIndexer extends AbstractBazelIndexer {
     @Override
     protected String getTargetName(Path jar) {
         String targetName = partialTargetName(jar);
-        return targetName.replace("/jar", "//jar");
+        return "@" + targetName.replace("/jar", "//jar");
     }
 
     private String partialTargetName(Path jar) {
