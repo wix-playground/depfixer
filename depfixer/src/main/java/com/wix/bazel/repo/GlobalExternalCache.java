@@ -30,12 +30,10 @@ public class GlobalExternalCache {
     private String srcWorkspaceName;
     private LabeldexRestClient labeldexrestClient = new LabeldexRestClient(new RestClient("http://bo.wix.com/labeldex-webapp", 3000));
     private RepoCache cache;
-    private RunMode runMode;
 
-    public GlobalExternalCache(Set<String> tetOnlyTargets, String srcWorkspaceName, RunMode runMode) {
+    public GlobalExternalCache(Set<String> tetOnlyTargets, String srcWorkspaceName) {
         this.cache = new RepoCache(tetOnlyTargets);
         this.srcWorkspaceName = srcWorkspaceName;
-        this.runMode = runMode;
     }
 
     public RepoCache get(List<String> classes) {
@@ -56,8 +54,8 @@ public class GlobalExternalCache {
         BulkSymbols symbols = new BulkSymbols(JavaConverters.asScalaBuffer(classes).toSet());
         BulkLabelsSocialMode clientLabels =
                 RunWithRetries.run(5, 500L,
-                        () -> labeldexrestClient.findSocialBulkLabels(symbols, srcWorkspaceName,
-                                runMode != RunMode.ISOLATED));
+                        () -> labeldexrestClient.findSocialBulkLabels(symbols, srcWorkspaceName,false)
+                );
 
         if (clientLabels == null) {
             return;
