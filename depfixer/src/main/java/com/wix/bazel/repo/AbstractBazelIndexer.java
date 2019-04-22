@@ -1,34 +1,47 @@
 package com.wix.bazel.repo;
 
+import com.wix.bazel.process.ExecuteResult;
+import com.wix.bazel.process.ProcessRunner;
 import com.wix.bazel.runmode.RunMode;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
 
 import java.io.*;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
-abstract public class AbstractBazelIndexer extends SimpleFileVisitor<Path> {
+abstract public class AbstractBazelIndexer {
+    private static final List<String> BASE_IGNORE = Arrays.asList(
+            "*",
+            "!*/",
+            "*remotejdk*/",
+            "local_jdk/",
+            "io_bazel_rules_scala*/",
+            "resources/",
+            "!*.jar",
+            "*-src.jar",
+            "*-sources.jar"
+    );
+
     final Path repoRoot;
     final String workspaceName;
     final RunMode runMode;
     final Path directoryToIndex;
 
     private RepoCache classToTarget;
-    private Map<String, CodeJar> cachedJars;
-    private Set<String> indexedJars;
 
     private final Path persistencePath;
-    private final AtomicInteger hitsCounter = new AtomicInteger(0);
-    private final AtomicInteger jarsCounter = new AtomicInteger(0);
+    private final AtomicInteger newlyIndexedJars = new AtomicInteger(0);
+    private final Git git;
 
     AbstractBazelIndexer(Path repoRoot, Path persistencePath, String workspaceName,
                          RunMode runMode, Path directoryToIndex,
@@ -40,94 +53,60 @@ abstract public class AbstractBazelIndexer extends SimpleFileVisitor<Path> {
         this.persistencePath = persistencePath;
 
         initFromDisk(testOnlyTargets);
+        this.git = time("git init: ", this::initGit).result;
     }
 
-    @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+    private Git initGit() {
+        try {
+            List<String> content = new LinkedList<>(BASE_IGNORE);
+            content.addAll(gitIgnoreContent());
+
+            Path gitIgnorePath = directoryToIndex.resolve(".gitignore");
+            Files.write(gitIgnorePath, content, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+
+            return Git.init().setDirectory(directoryToIndex.toFile()).call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void indexFile(Path file, BasicFileAttributes attrs) throws IOException {
         if (!attrs.isRegularFile() || !jarNeedsToBeIndexed(file)) {
-            return FileVisitResult.CONTINUE;
+            return;
         }
 
         String targetName = getTargetName(file);
 
-        CodeJar codeJar = new CodeJar(file, attrs);
-        CodeJar prevCodeJar = cachedJars.get(codeJar.path);
-
-        if (prevCodeJar != null) {
-            if (Objects.equals(codeJar, prevCodeJar)) {
-                hitsCounter.incrementAndGet();
-                indexedJars.add(codeJar.path);
-                jarsCounter.incrementAndGet();
-
-                return FileVisitResult.CONTINUE;
-            } else {
-                classToTarget.clear(codeJar.path);
-                cachedJars.remove(codeJar.path);
-            }
-        }
-
         if (targetName == null) {
-            return FileVisitResult.CONTINUE;
+            return;
         }
 
-        jarsCounter.incrementAndGet();
+        newlyIndexedJars.incrementAndGet();
 
         JarFileProcessor.addClassesToCache(file, targetName, classToTarget);
-        cachedJars.put(codeJar.path, codeJar);
-        indexedJars.add(codeJar.path);
-
-        return FileVisitResult.CONTINUE;
-    }
-
-    @SuppressWarnings("RedundantThrows")
-    @Override
-    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        if (directoryNeedsToBeIndexed(dir)) {
-            return FileVisitResult.CONTINUE;
-        }
-
-        return FileVisitResult.SKIP_SUBTREE;
     }
 
     public final RepoCache index() {
-        time("total indexing time:", () -> {
-            beforeIndexing();
+        TimeResult<Duration> res = time("total indexing time:", this::doIndex);
 
-            try {
-                Files.walkFileTree(directoryToIndex, this);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            afterIndexing();
-        });
+        if (res.result.getSeconds() > 3) {
+            //TODO - execute async
+            time("git gc: ", () -> ProcessRunner.quiteExecute(directoryToIndex, Collections.emptyMap(), "git", "gc"));
+            time("git repack: ", () -> ProcessRunner.quiteExecute(directoryToIndex, Collections.emptyMap(), "git", "repack"));
+        }
 
         return classToTarget;
     }
 
     private void beforeIndexing() {
-        indexedJars = new HashSet<>();
-        hitsCounter.set(0);
-        jarsCounter.set(0);
+        newlyIndexedJars.set(0);
     }
 
     private void afterIndexing() {
-        int totalRemoved = 0;
-        for(String jar : new HashSet<>(cachedJars.keySet())) {
-            if (indexedJars.contains(jar)) continue;
-
-            classToTarget.clear(jar);
-            cachedJars.remove(jar);
-
-            totalRemoved++;
-        }
-
-        if (jarsCounter.get() != hitsCounter.get())
+        if (newlyIndexedJars.get() > 0)
             time("saving index to file:", this::saveToDisk);
 
-        System.out.println(this.getClass().getName() + " total jars: " + jarsCounter.get());
-        System.out.println(this.getClass().getName() + " total hits: " + hitsCounter.get());
-        System.out.println(this.getClass().getName() + " total removed: " + totalRemoved);
+        System.out.println(this.getClass().getName() + " total jars: " + newlyIndexedJars.get());
     }
 
     private void initFromDisk(Set<String> testOnlyTargets) {
@@ -137,39 +116,63 @@ abstract public class AbstractBazelIndexer extends SimpleFileVisitor<Path> {
             this.classToTarget = new RepoCache(testOnlyTargets);
         else
             this.classToTarget.setTestTargets(testOnlyTargets);
-
-        if (this.cachedJars == null)
-            this.cachedJars = new HashMap<>();
     }
 
     @SuppressWarnings("unchecked")
     private void loadFromDisk() {
         Path diskCopy = getDiskCopyFilename();
 
-        if (!Files.isRegularFile(diskCopy)) return;
+        if (!Files.isRegularFile(diskCopy)) {
+            removeGit();
+            return;
+        }
 
         try (FileInputStream fis = new FileInputStream(diskCopy.toFile())) {
             try (ObjectInputStream ois = new ObjectInputStream(new InflaterInputStream(fis))) {
                 classToTarget = (RepoCache) ois.readObject();
-                cachedJars = (Map<String, CodeJar>) ois.readObject();
             }
         } catch (Exception e) {
             System.err.println("Failed to load index from disk");
             e.printStackTrace();
 
             classToTarget = null;
-            cachedJars = null;
+            removeGit();
         }
     }
 
-    private void time(String message, Runnable runnable) {
+    private void removeGit() {
+        ProcessRunner.quiteExecute(directoryToIndex, Collections.emptyMap(), "rm", "-fr", ".git");
+    }
+
+    private Duration time(String message, Runnable runnable) {
         Instant start = Instant.now();
 
         runnable.run();
 
         Instant end = Instant.now();
 
-        System.out.println(this.getClass().getName() + " " + message + " " + Duration.between(start, end));
+        Duration duration = Duration.between(start, end);
+        System.out.println(this.getClass().getName() + " " + message + " " + duration);
+
+        return duration;
+    }
+
+    private <T> TimeResult<T> time(String message, Callable<T> callable) {
+        Instant start = Instant.now();
+
+        T res;
+        try {
+            res = callable.call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Instant end = Instant.now();
+
+        Duration duration = Duration.between(start, end);
+        System.out.println(this.getClass().getName() + " " + message + " " + duration);
+
+        return new TimeResult<>(duration, res);
     }
 
     private void saveToDisk() {
@@ -187,7 +190,6 @@ abstract public class AbstractBazelIndexer extends SimpleFileVisitor<Path> {
         try (FileOutputStream fos = new FileOutputStream(diskCopy.toFile())) {
             try (ObjectOutputStream oos = new ObjectOutputStream(new DeflaterOutputStream(fos))) {
                 oos.writeObject(classToTarget);
-                oos.writeObject(cachedJars);
             }
         } catch (Exception e) {
             System.err.println("Failed to save index to disk");
@@ -203,34 +205,76 @@ abstract public class AbstractBazelIndexer extends SimpleFileVisitor<Path> {
         return jar.toString().endsWith(".jar") && isCodejar(jar);
     }
 
-    protected abstract boolean isCodejar(Path jar);
+    protected abstract List<String> gitIgnoreContent();
 
-    protected abstract boolean directoryNeedsToBeIndexed(Path dir);
+    protected abstract boolean isCodejar(Path jar);
 
     protected abstract String getTargetName(Path jar);
 
-    private static class CodeJar implements Serializable {
-        final String path;
-        final long lastModifiedTime;
+    private Duration doIndex() {
+        beforeIndexing();
 
-        CodeJar(Path jar, BasicFileAttributes attrs) {
-            path = jar.toAbsolutePath().toString();
-            lastModifiedTime = attrs.lastModifiedTime().toMillis();
+        TimeResult<ExecuteResult> executeResult;
+        try {
+            executeResult = time("git add: ", () -> ProcessRunner.quiteExecute(directoryToIndex, Collections.emptyMap(), "git", "add", "-v", "."));
+
+            if (executeResult.result.stdoutLines.isEmpty()) {
+                return executeResult.duration;
+            }
+
+            TimeResult<Status> statusResult =
+                    time("git status: ", () -> git.status().call());
+
+            Status status = statusResult.result;
+
+            if (!status.isClean()) {
+                status.getAdded().stream()
+                        .map(directoryToIndex::resolve)
+                        .filter(this::jarNeedsToBeIndexed)
+                        .forEach(p -> {
+                            try {
+                                indexFile(p, Files.readAttributes(p, BasicFileAttributes.class));
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+
+                status.getRemoved().stream()
+                        .map(directoryToIndex::resolve)
+                        .filter(this::jarNeedsToBeIndexed)
+                        .forEach(p -> classToTarget.clear(p.toAbsolutePath().toString()));
+
+                status.getChanged().stream()
+                        .map(directoryToIndex::resolve)
+                        .filter(this::jarNeedsToBeIndexed)
+                        .forEach(p -> {
+                            try {
+                                classToTarget.clear(p.toAbsolutePath().toString());
+                                indexFile(p, Files.readAttributes(p, BasicFileAttributes.class));
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+
+
+                git.commit().setSign(Boolean.FALSE).setMessage("commit by depfixer").call();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            CodeJar codeJar = (CodeJar) o;
-            return Objects.equals(path, codeJar.path) &&
-                    Objects.equals(lastModifiedTime, codeJar.lastModifiedTime);
-        }
+        afterIndexing();
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(path, lastModifiedTime);
-        }
+        return executeResult.duration;
     }
 
+    private static final class TimeResult<T> {
+        final Duration duration;
+        final T result;
+
+        TimeResult(Duration duration, T result) {
+            this.duration = duration;
+            this.result = result;
+        }
+    }
 }

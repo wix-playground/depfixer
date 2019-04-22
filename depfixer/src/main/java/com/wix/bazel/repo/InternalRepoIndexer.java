@@ -5,6 +5,8 @@ import com.wix.bazel.runmode.RunMode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 public class InternalRepoIndexer extends AbstractBazelIndexer {
@@ -18,25 +20,28 @@ public class InternalRepoIndexer extends AbstractBazelIndexer {
     }
 
     @Override
-    protected boolean isCodejar(Path jar) {
-        String fileName = jar.toString();
-        return !fileName.endsWith("-src.jar") &&
-                !fileName.endsWith("-ijar.jar") &&
-                !fileName.endsWith("_java-hjar.jar") &&
-                !fileName.endsWith("_java-native-header.jar") &&
-                !fileName.endsWith("_manifest_jar.jar") &&
-                !fileName.endsWith("_deploy.jar")
-                ;
+    protected List<String> gitIgnoreContent() {
+        return Arrays.asList(
+                runMode == RunMode.ISOLATED ? "external/" : "",
+                "external/" + workspaceName + "/",
+                "external/bazel_tools/",
+                "external/io_bazel_rules/",
+                "*.runfiles/",
+                "*-ijar.jar",
+                "*_java-hjar.jar",
+                "*_java-native-header.jar",
+                "*_manifest_jar.jar",
+                "*_deploy.jar",
+                "*-deployable.jar",
+                "*_test_runner.jar",
+                "main_dependencies.jar",
+                "test_dependencies.jar"
+        );
     }
 
     @Override
-    protected boolean directoryNeedsToBeIndexed(Path dir) {
-        Path relTarget = directoryToIndex.relativize(dir);
-        return !relTarget.startsWith("external/" + workspaceName) &&
-                !dir.toString().contains("external/bazel_tools") &&
-                !dir.toString().contains("external/io_bazel_rules") &&
-                !dir.toString().contains(".runfiles/") &&
-                !skipExternalWhenIsolatedMode(relTarget);
+    protected boolean isCodejar(Path jar) {
+        return true;
     }
 
     @Override
@@ -84,10 +89,6 @@ public class InternalRepoIndexer extends AbstractBazelIndexer {
         return  external ?
                 String.format("@%s:%s", targetPath, fileTargetName).replaceFirst("/", "//") :
                 String.format("//%s:%s", targetPath, fileTargetName);
-    }
-
-    private boolean skipExternalWhenIsolatedMode(Path relTarget) {
-        return runMode == RunMode.ISOLATED && relTarget.toString().startsWith("external/");
     }
 
     private boolean targetDoesNotExist(Path packagePath, String targetName) throws IOException {

@@ -12,6 +12,7 @@ scala_library(
         "@com_wixpress_ci_labeldex_common",
         "@com_wixpress_wix_ci_rest_client",
         "@org_scala_lang_scala_library",
+        "@org_eclipse_jgit_org_eclipse_jgit",
      ],
 )
 

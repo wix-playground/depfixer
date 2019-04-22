@@ -5,8 +5,9 @@ import com.wix.bazel.runmode.RunMode;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,25 +17,24 @@ public class ExternalRepoIndexer extends AbstractBazelIndexer {
     public ExternalRepoIndexer(Path repoRoot, Path persistencePath, String workspaceName, RunMode runMode,
                                Path directoryToScan, Set<String> testOnlyTargets) {
         super(repoRoot, persistencePath, workspaceName, runMode, directoryToScan, testOnlyTargets);
-        InputStream stream  = this.getClass().getClassLoader().getResourceAsStream("jars.txt");
+
+        InputStream stream = this.getClass().getClassLoader().getResourceAsStream("jars.txt");
         filteredJars = new BufferedReader(new InputStreamReader(stream))
                 .lines().collect(Collectors.toSet());
     }
 
     @Override
-    protected boolean isCodejar(Path jar) {
-        String fileName = jar.toString();
-        String targetName = partialTargetName(jar);
-        return !fileName.endsWith("-src.jar") &&
-                isValid(targetName) &&
-                !excludedJar(targetName);
+    protected List<String> gitIgnoreContent() {
+        return Arrays.asList(
+                workspaceName,
+                "com_google_collections_google_collections/");
     }
 
     @Override
-    protected boolean directoryNeedsToBeIndexed(Path dir) {
-        return !dir.startsWith(directoryToIndex.resolve(workspaceName)) &&
-                !dir.toString().contains("com_google_collections_google_collections") &&
-                !Files.isSymbolicLink(dir);
+    protected boolean isCodejar(Path jar) {
+        String targetName = partialTargetName(jar);
+        return isValid(targetName) &&
+                !excludedJar(targetName);
     }
 
     @Override

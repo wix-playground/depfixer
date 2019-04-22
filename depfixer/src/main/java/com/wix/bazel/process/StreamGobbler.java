@@ -10,8 +10,12 @@ public class StreamGobbler implements Runnable {
     private Collector collector;
 
     public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
+        this(inputStream, consumer, false);
+    }
+
+    public StreamGobbler(InputStream inputStream, Consumer<String> consumer, boolean quiet) {
         this.inputStream = inputStream;
-        this.collector = new Collector(consumer);
+        this.collector = new Collector(consumer, quiet);
     }
 
     @Override

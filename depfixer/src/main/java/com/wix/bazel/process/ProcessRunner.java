@@ -2,9 +2,7 @@ package com.wix.bazel.process;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -40,6 +38,47 @@ public class ProcessRunner {
         res.exitCode = exitCode;
         res.stderr = stderr.getStream();
         res.stdout = stdout.getStream();
+
+        return res;
+    }
+
+    public static ExecuteResult quiteExecute(Path path, Map<String, String> env, String... args) {
+        ProcessBuilder builder = new ProcessBuilder();
+
+        builder.command(args);
+        builder.directory(path.toFile());
+        builder.environment().putAll(env);
+
+        Process process = null;
+        try {
+            process = builder.start();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        List<String> outList = new LinkedList<>();
+        List<String> errList = new LinkedList<>();
+
+        StreamGobbler stdout =
+                new StreamGobbler(process.getInputStream(), outList::add);
+        StreamGobbler stderr =
+                new StreamGobbler(process.getErrorStream(), outList::add);
+
+        executorService.submit(stdout);
+        executorService.submit(stderr);
+
+        int exitCode = 0;
+        try {
+            exitCode = process.waitFor();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        ExecuteResult res = new ExecuteResult();
+
+        res.command = String.join(" ", Arrays.asList(args));
+        res.exitCode = exitCode;
+        res.stdoutLines = outList;
+        res.stderrLines = errList;
 
         return res;
     }
