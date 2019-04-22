@@ -74,6 +74,11 @@ public class GlobalExternalCache {
         List<Symbol3rdPartyLabels> symbol3rdPartyLabels = filterPackages(bulk3rdPartyLabels.symbolDocument().toBuffer(),
                 s -> s.symbol().symbolType());
 
+        System.out.println("classes = " + classes);
+        System.out.println("symbolLabels = " + symbolLabels);
+        System.out.println("symbol2ndPartyLabels = " + symbol2ndPartyLabels);
+        System.out.println("symbol3rdPartyLabels = " + symbol3rdPartyLabels);
+
         Map<String, Set<String>> bazelLabelsMap = toLabelsMap(symbolLabels,
                 s -> s.symbol().fullyQualifiedName(),
                 s -> symbolLabels(s).map(this::formatLabel).collect(Collectors.toSet()));
