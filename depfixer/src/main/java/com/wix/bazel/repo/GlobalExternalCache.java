@@ -96,9 +96,9 @@ public class GlobalExternalCache {
         for (String fqn : classes) {
             Optional<Set<String>> maybeLabels =
                     Stream.of(bazelLabelsMap, symbol3rdPartyLabelsMap, symbol2ndPartyLabelsMap)
-                    .map(x -> x.get(fqn))
-                    .filter(Objects::nonNull)
-                    .findFirst();
+                            .map(x -> x.get(fqn))
+                            .filter(Objects::nonNull)
+                            .findFirst();
 
             maybeLabels.ifPresent(strings -> strings.forEach(l -> cache.put(null, fqn, l)));
         }
@@ -136,7 +136,11 @@ public class GlobalExternalCache {
     private <S> Map<String, Set<String>> toLabelsMap(List<S> symbols, Function<S, String> fqnAccessor,
                                                      Function<S, Set<String>> labelsAccessor) {
         return symbols.stream()
-                .collect(Collectors.toMap(fqnAccessor, labelsAccessor));
+                .collect(Collectors.toMap(fqnAccessor, labelsAccessor, (x, y) -> {
+                    Set<String> res = new HashSet<>(x);
+                    res.addAll(y);
+                    return res;
+                }));
     }
 
     private String fixLabel(String label) {
