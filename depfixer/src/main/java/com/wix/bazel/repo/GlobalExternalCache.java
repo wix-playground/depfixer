@@ -30,10 +30,12 @@ public class GlobalExternalCache {
     private String srcWorkspaceName;
     private LabeldexRestClient labeldexrestClient = new LabeldexRestClient(new RestClient("http://bo.wix.com/labeldex-webapp", 3000));
     private RepoCache cache;
+    private final RunMode runMode;
 
-    public GlobalExternalCache(Set<String> tetOnlyTargets, String srcWorkspaceName) {
+    public GlobalExternalCache(Set<String> tetOnlyTargets, String srcWorkspaceName, RunMode runMode) {
         this.cache = new RepoCache(tetOnlyTargets);
         this.srcWorkspaceName = srcWorkspaceName;
+        this.runMode = runMode;
     }
 
     public RepoCache get(List<String> classes) {
@@ -54,7 +56,8 @@ public class GlobalExternalCache {
         BulkSymbols symbols = new BulkSymbols(JavaConverters.asScalaBuffer(classes).toSet());
         BulkLabelsSocialMode clientLabels =
                 RunWithRetries.run(5, 500L,
-                        () -> labeldexrestClient.findSocialBulkLabels(symbols, srcWorkspaceName,false)
+                        () -> labeldexrestClient.findSocialBulkLabels(symbols,
+                                srcWorkspaceName,runMode != RunMode.ISOLATED)
                 );
 
         if (clientLabels == null) {
@@ -128,7 +131,7 @@ public class GlobalExternalCache {
 
     private <S> List<S> filterPackages(Buffer<S> symbols, Function<S, Enumeration.Value> symbolTypeAccessor) {
         List<S> symbolsList = JavaConverters.bufferAsJavaList(symbols.toBuffer());
-        return  symbolsList.stream()
+        return symbolsList.stream()
                 .filter(x -> symbolTypeAccessor.apply(x) != SymbolType.PACKAGE())
                 .collect(Collectors.toList());
     }
