@@ -27,6 +27,7 @@ abstract public class AbstractBazelIndexer {
             "local_jdk/",
             "io_bazel_rules_scala*/",
             "resources/",
+            "**/org_scala_lang_scala_*/",
             "!*.jar",
             "*-src.jar",
             "*-sources.jar"
