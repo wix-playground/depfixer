@@ -4,6 +4,9 @@ import com.wix.bazel.runmode.RunMode;
 import org.apache.commons.cli.*;
 
 import java.nio.file.Paths;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.function.Function;
 
 public class CliParameters {
@@ -14,6 +17,7 @@ public class CliParameters {
     private int runLimit;
     private RunMode runMode;
     private String indexDir;
+    private List<String> bazelOpts;
 
     private CliParameters() {}
 
@@ -22,13 +26,15 @@ public class CliParameters {
                           String outputDir,
                           int runLimit,
                           RunMode runMode,
-                          String indexDir) {
+                          String indexDir,
+                          List<String> bazelOpts) {
         this.repoPath = repoPath;
         this.targets = targets;
         this.outputDir = outputDir;
         this.runLimit = runLimit;
         this.runMode = runMode;
         this.indexDir = indexDir;
+        this.bazelOpts = bazelOpts;
     }
 
     private static CliParameters empty() {
@@ -48,7 +54,7 @@ public class CliParameters {
 
         try {
 
-            CommandLineParser parser = new BasicParser();
+            Parser parser = new Parser();
             CommandLine cliParameters = parser.parse(cliOptions, args);
 
             String defaultIndexDir = Paths.get(System.getProperty("user.home"), ".depfixer-index").toAbsolutePath().toString();
@@ -62,7 +68,7 @@ public class CliParameters {
                     RunMode::valueOf, RunMode.ISOLATED);
             String indexDir = getOptionValue(cliParameters,"indexDir", Function.identity(), defaultIndexDir);
 
-            return new CliParameters(repoPath, targets, outputDir, runLimit, runMode, indexDir);
+            return new CliParameters(repoPath, targets, outputDir, runLimit, runMode, indexDir, parser.bazelArgs);
 
         } catch (Exception ex) {
             printHelp(cliOptions);
@@ -113,6 +119,10 @@ public class CliParameters {
         return indexDir;
     }
 
+    public List<String> getBazelOpts() {
+        return bazelOpts;
+    }
+
     private static Option cliRepo = createOption("repoPath",
             "Path to repo - default is current repo",
             "repo");
@@ -144,5 +154,17 @@ public class CliParameters {
 
         return OptionBuilder.create(optionName);
 
+    }
+
+    private static class Parser extends BasicParser {
+        private List<String> bazelArgs = new LinkedList<>();
+
+        protected void processOption(String arg, ListIterator iter) throws ParseException {
+            try {
+                super.processOption(arg, iter);
+            } catch (UnrecognizedOptionException e) {
+                bazelArgs.add(arg);
+            }
+        }
     }
 }
