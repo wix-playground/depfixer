@@ -77,7 +77,7 @@ abstract public class AbstractBazelIndexer {
         ExecuteResult res = ProcessRunner.quiteExecute(repoRoot, Collections.emptyMap(),
                 "git", "rev-parse", "--abbrev-ref", "HEAD");
 
-        if (res.exitCode == 0) {
+        if (res.exitCode == 0 && !res.stdoutLines.isEmpty()) {
             return res.stdoutLines.get(0);
         }
 
