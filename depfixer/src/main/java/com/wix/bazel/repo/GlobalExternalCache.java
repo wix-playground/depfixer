@@ -61,7 +61,7 @@ public class GlobalExternalCache {
         BulkLabelsSocialMode clientLabels =
                 RunWithRetries.run(5, 500L,
                         () -> labeldexrestClient.findSocialBulkLabels(symbols,
-                                srcWorkspaceName,runMode == RunMode.SOCIAL)
+                                srcWorkspaceName,runMode != RunMode.ISOLATED)
                 );
 
         if (clientLabels == null) {
