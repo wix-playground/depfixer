@@ -3,10 +3,7 @@ package com.wix.bazel.repo;
 import com.wix.bazel.brokentarget.BrokenTargetData;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class RepoCache implements Serializable  {
     private Map<String, TargetsHolder> map = new HashMap<>();
@@ -46,13 +43,17 @@ public class RepoCache implements Serializable  {
     }
 
     public String get(String cls, BrokenTargetData targetData) {
+        return get(cls, targetData, Collections.emptySet());
+    }
+
+    public String get(String cls, BrokenTargetData targetData, Set<String> targetHistory) {
         TargetsHolder holder = map.get(cls);
 
         if (holder == null) {
             return null;
         }
 
-        return holder.getTarget(targetData);
+        return holder.getTarget(targetData, targetHistory);
     }
 
     public Set<String> getClasses() {

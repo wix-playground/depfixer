@@ -26,8 +26,8 @@ public class TargetsHolder implements Serializable {
         return testTarget == null && prodTargets.isEmpty();
     }
 
-    String getTarget(BrokenTargetData forTarget) {
-        String target = getTargetInternal(forTarget);
+    String getTarget(BrokenTargetData forTarget, Set<String> targetHistory) {
+        String target = getTargetInternal(forTarget, targetHistory);
         return normalizeTarget(forTarget, target);
     }
 
@@ -59,18 +59,23 @@ public class TargetsHolder implements Serializable {
         return target;
     }
 
-    private String getTargetInternal(BrokenTargetData forTarget) {
+    private String getTargetInternal(BrokenTargetData forTarget, Set<String> targetHistory) {
+        Optional<TargetWrapper> maybeCandidateProdTarget = prodTargets.stream().filter(tw -> !targetHistory.contains(tw.target())).findFirst();
+
         if (forTarget.isTestOnly()) {
-            Optional<TargetWrapper> maybeProdTarget = prodTargets.stream().findFirst();
-            return or(maybeProdTarget, Optional.ofNullable(testTarget)).map(TargetWrapper::target).orElse(null);
+            return or(maybeCandidateProdTarget, Optional.ofNullable(testTarget)).map(TargetWrapper::target).orElse(null);
         }
 
         if (prodTargets.isEmpty()) {
             return null;
         }
 
-        Optional<TargetWrapper> maybeProdTarget = prodTargets.stream().filter(t -> !targetIsImplicitTest(t.target)).findFirst();
-        return or(maybeProdTarget, prodTargets.stream().findFirst()).map(TargetWrapper::target).orElse(null);
+        Optional<TargetWrapper> maybeProdTarget = prodTargets.stream()
+                .filter(t -> !targetIsImplicitTest(t.target))
+                .filter(tw -> !targetHistory.contains(tw.target()))
+                .findFirst();
+        return or(maybeProdTarget, or(maybeCandidateProdTarget, prodTargets.stream().findFirst()))
+                .map(TargetWrapper::target).orElse(null);
     }
 
     private static boolean targetIsImplicitTest(String target) {

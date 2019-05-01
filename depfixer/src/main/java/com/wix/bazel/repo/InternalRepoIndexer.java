@@ -8,6 +8,9 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 public class InternalRepoIndexer extends AbstractBazelIndexer {
     private final Path externalPath;
@@ -28,8 +31,8 @@ public class InternalRepoIndexer extends AbstractBazelIndexer {
                 "external/io_bazel_rules/",
                 "*.runfiles/",
                 "*-ijar.jar",
-                "*_java-hjar.jar",
-                "*_java-native-header.jar",
+                "*-hjar.jar",
+                "*-native-header.jar",
                 "*_manifest_jar.jar",
                 "*_deploy.jar",
                 "*-deployable.jar",
@@ -84,6 +87,23 @@ public class InternalRepoIndexer extends AbstractBazelIndexer {
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+
+        if (fileTargetName.startsWith("lib")) {
+            try {
+                Manifest m = new JarFile(jar.toFile()).getManifest();
+                Attributes attrs = m.getMainAttributes();
+
+                if (attrs != null && !attrs.isEmpty()) {
+                    String label = attrs.getValue("Target-Label");
+
+                    if (label != null && !label.isEmpty()) {
+                        return label;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         return  external ?

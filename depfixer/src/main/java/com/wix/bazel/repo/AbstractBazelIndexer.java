@@ -43,6 +43,7 @@ abstract public class AbstractBazelIndexer {
     private final Path persistencePath;
     private final AtomicInteger newlyIndexedJars = new AtomicInteger(0);
     private final Git git;
+    private final String currentBranch;
 
     AbstractBazelIndexer(Path repoRoot, Path persistencePath, String workspaceName,
                          RunMode runMode, Path directoryToIndex,
@@ -53,6 +54,7 @@ abstract public class AbstractBazelIndexer {
         this.directoryToIndex = directoryToIndex;
         this.persistencePath = persistencePath;
 
+        this.currentBranch = getCurrentBranch();
         initFromDisk(testOnlyTargets);
         this.git = time("git init: ", this::initGit).result;
     }
@@ -69,6 +71,17 @@ abstract public class AbstractBazelIndexer {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String getCurrentBranch() {
+        ExecuteResult res = ProcessRunner.quiteExecute(repoRoot, Collections.emptyMap(),
+                "git", "rev-parse", "--abbrev-ref", "HEAD");
+
+        if (res.exitCode == 0) {
+            return res.stdoutLines.get(0);
+        }
+
+        return "n/a";
     }
 
     private void indexFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -124,21 +137,31 @@ abstract public class AbstractBazelIndexer {
         Path diskCopy = getDiskCopyFilename();
 
         if (!Files.isRegularFile(diskCopy)) {
-            removeGit();
+            nukeIndex();
             return;
         }
 
         try (FileInputStream fis = new FileInputStream(diskCopy.toFile())) {
             try (ObjectInputStream ois = new ObjectInputStream(new InflaterInputStream(fis))) {
-                classToTarget = (RepoCache) ois.readObject();
+                String branch = (String) ois.readObject();
+
+                if (currentBranch.equals(branch)) {
+                    classToTarget = (RepoCache) ois.readObject();
+                } else {
+                    nukeIndex();
+                }
             }
         } catch (Exception e) {
             System.err.println("Failed to load index from disk");
             e.printStackTrace();
 
-            classToTarget = null;
-            removeGit();
+            nukeIndex();
         }
+    }
+
+    private void nukeIndex() {
+        classToTarget = null;
+        removeGit();
     }
 
     private void removeGit() {
@@ -190,6 +213,7 @@ abstract public class AbstractBazelIndexer {
 
         try (FileOutputStream fos = new FileOutputStream(diskCopy.toFile())) {
             try (ObjectOutputStream oos = new ObjectOutputStream(new DeflaterOutputStream(fos))) {
+                oos.writeObject(currentBranch);
                 oos.writeObject(classToTarget);
             }
         } catch (Exception e) {

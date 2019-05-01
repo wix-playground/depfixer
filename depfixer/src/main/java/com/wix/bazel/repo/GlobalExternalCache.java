@@ -27,15 +27,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GlobalExternalCache {
-    private String srcWorkspaceName;
-    private LabeldexRestClient labeldexrestClient = new LabeldexRestClient(new RestClient("http://bo.wix.com/labeldex-webapp", 3000));
+    private final LabeldexRestClient labeldexrestClient = new LabeldexRestClient(
+            new RestClient("http://bo.wix.com/labeldex-webapp", 3000));
+
+    private final String srcWorkspaceName;
     private RepoCache cache;
     private final RunMode runMode;
+    private final boolean cleanMode;
 
-    public GlobalExternalCache(Set<String> tetOnlyTargets, String srcWorkspaceName, RunMode runMode) {
+    public GlobalExternalCache(Set<String> tetOnlyTargets, String srcWorkspaceName, RunMode runMode, boolean cleanMode) {
         this.cache = new RepoCache(tetOnlyTargets);
         this.srcWorkspaceName = srcWorkspaceName;
         this.runMode = runMode;
+        this.cleanMode = cleanMode;
     }
 
     public RepoCache get(List<String> classes) {
@@ -57,7 +61,7 @@ public class GlobalExternalCache {
         BulkLabelsSocialMode clientLabels =
                 RunWithRetries.run(5, 500L,
                         () -> labeldexrestClient.findSocialBulkLabels(symbols,
-                                srcWorkspaceName,runMode != RunMode.ISOLATED)
+                                srcWorkspaceName,runMode == RunMode.SOCIAL)
                 );
 
         if (clientLabels == null) {
@@ -76,11 +80,6 @@ public class GlobalExternalCache {
 
         List<Symbol3rdPartyLabels> symbol3rdPartyLabels = filterPackages(bulk3rdPartyLabels.symbolDocument().toBuffer(),
                 s -> s.symbol().symbolType());
-
-        System.out.println("classes = " + classes);
-        System.out.println("symbolLabels = " + symbolLabels);
-        System.out.println("symbol2ndPartyLabels = " + symbol2ndPartyLabels);
-        System.out.println("symbol3rdPartyLabels = " + symbol3rdPartyLabels);
 
         Map<String, Set<String>> bazelLabelsMap = toLabelsMap(symbolLabels,
                 s -> s.symbol().fullyQualifiedName(),
@@ -109,7 +108,7 @@ public class GlobalExternalCache {
 
     private Stream<Label> symbolLabels(SymbolLabels labels) {
         Supplier<Stream<Label>> labelsStreamSupplier = () -> JavaConverters.setAsJavaSet(labels.labels()).stream()
-                .filter(l -> !l.workspace().equals(srcWorkspaceName));
+                .filter(l -> cleanMode || !l.workspace().equals(srcWorkspaceName));
 
         Supplier<Stream<Label>> fwLabelsStreamSupplier = () ->
                 labelsStreamSupplier.get().filter(l -> l.workspace().equals("wix_platform_wix_framework"));
@@ -126,6 +125,9 @@ public class GlobalExternalCache {
     }
 
     private String formatLabel(Label l) {
+        if (l.workspace().equals(srcWorkspaceName))
+            return fixLabel(l.label());
+
         return String.format("@%s%s", l.workspace(), fixLabel(l.label()));
     }
 

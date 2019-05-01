@@ -18,6 +18,7 @@ public class CliParameters {
     private RunMode runMode;
     private String indexDir;
     private List<String> bazelOpts;
+    private boolean cleanMode;
 
     private CliParameters() {}
 
@@ -27,7 +28,8 @@ public class CliParameters {
                           int runLimit,
                           RunMode runMode,
                           String indexDir,
-                          List<String> bazelOpts) {
+                          List<String> bazelOpts,
+                          boolean cleanMode) {
         this.repoPath = repoPath;
         this.targets = targets;
         this.outputDir = outputDir;
@@ -35,6 +37,7 @@ public class CliParameters {
         this.runMode = runMode;
         this.indexDir = indexDir;
         this.bazelOpts = bazelOpts;
+        this.cleanMode = cleanMode;
     }
 
     private static CliParameters empty() {
@@ -51,6 +54,7 @@ public class CliParameters {
         cliOptions.addOption(cliRunLimit);
         cliOptions.addOption(cliRunMode);
         cliOptions.addOption(cliIndexDir);
+        cliOptions.addOption(cleanModeOpt);
 
         try {
 
@@ -68,7 +72,7 @@ public class CliParameters {
                     RunMode::valueOf, RunMode.ISOLATED);
             String indexDir = getOptionValue(cliParameters,"indexDir", Function.identity(), defaultIndexDir);
 
-            return new CliParameters(repoPath, targets, outputDir, runLimit, runMode, indexDir, parser.bazelArgs);
+            return new CliParameters(repoPath, targets, outputDir, runLimit, runMode, indexDir, parser.bazelArgs, cliParameters.hasOption("clean_mode"));
 
         } catch (Exception ex) {
             printHelp(cliOptions);
@@ -123,6 +127,10 @@ public class CliParameters {
         return bazelOpts;
     }
 
+    public boolean isCleanMode() {
+        return cleanMode;
+    }
+
     private static Option cliRepo = createOption("repoPath",
             "Path to repo - default is current repo",
             "repo");
@@ -147,13 +155,23 @@ public class CliParameters {
             "Path to save different indexes",
             "indexDir");
 
+    private static Option cleanModeOpt = createOption("cleanMode",
+            "Use depfixer to fix repo after all deps were cleared",
+            "clean_mode", false);
+
     private static Option createOption(String argName, String description, String optionName) {
-        OptionBuilder.withArgName(argName);
+        return createOption(argName, description, optionName, true);
+    }
+
+    private static Option createOption(String argName, String description, String optionName, boolean hasArg) {
         OptionBuilder.withDescription(description);
-        OptionBuilder.hasArg();
+
+        if (hasArg) {
+            OptionBuilder.withArgName(argName);
+            OptionBuilder.hasArg();
+        }
 
         return OptionBuilder.create(optionName);
-
     }
 
     private static class Parser extends BasicParser {
