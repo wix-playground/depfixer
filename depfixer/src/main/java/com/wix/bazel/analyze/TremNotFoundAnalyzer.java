@@ -16,7 +16,7 @@ import static com.wix.bazel.analyze.ImportAnalysis.packageImport;
 public class TremNotFoundAnalyzer extends AbstractTargetAnalyzer {
     private static Pattern pattern =
             Pattern.compile("error: Symbol 'term ([^']+)' is missing from the classpath\\.\n" +
-                    "This symbol is required by 'value ([^']+)'.");
+                    "This symbol is required by '(?:value|type) ([^']+)'.");
 
     protected TremNotFoundAnalyzer(AnalyzerContext ctx) {
         super(ctx);

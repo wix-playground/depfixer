@@ -45,6 +45,17 @@ public class ObjectNotPackageMemberAnalyzer extends AbstractTargetAnalyzer {
                 if (matcher.find()) {
                     String fqnCls = matcher.group(1);
                     classes.add(fqnCls);
+                } else if (hint.indexOf(cls) > -1) {
+                    int idx = hint.indexOf(cls);
+
+                    hint = hint.substring(idx);
+                    matcher = ImportAnalysis.fqcn.matcher(pck + "." + hint);
+
+                    if (matcher.find())
+                        classes.add(matcher.group(0));
+                    else
+                        classes.add(pck + "." + cls);
+
                 } else {
                     classes.add(pck + "." + cls);
                 }
