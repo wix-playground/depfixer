@@ -3,9 +3,7 @@ package com.wix.bazel.brokentarget;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +48,7 @@ public class BrokenTargetExtractor {
     private List<BrokenTargetData> collectBrokenTargets(String stream, Pattern pattern, String type) {
         Matcher matcher = pattern.matcher(stream);
         List<BrokenTargetData> targets = new ArrayList<>();
+        Set<String> targetNames = new HashSet<>();
 
         while (matcher.find()) {
             BrokenTargetData data = new BrokenTargetData();
@@ -75,7 +74,8 @@ public class BrokenTargetExtractor {
                 data.repoName = "//";
             }
 
-            targets.add(data);
+            if (targetNames.add(data.targetName))
+                targets.add(data);
         }
 
         return targets;
