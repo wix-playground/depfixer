@@ -38,6 +38,7 @@ public class UberAnalyzer extends AbstractTargetAnalyzer {
         analyzers.add(new NeedsToBeAbstractAnalyzer(ctx));
         analyzers.add(new UnableToLocatClassAnalyzer(ctx));
         analyzers.add(new ToolInfoAnalyzer(ctx));
+        analyzers.add(new ValueIsNotMemberOfObjectAnalyzer(ctx));
     }
 
     @Override
