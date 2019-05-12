@@ -52,12 +52,12 @@ public class AllImportsAnalyzer extends AbstractTargetAnalyzer {
                 }
 
                 allImports.forEach(i ->
-                        result.addClass(i.replaceFirst("[_*]", hint), 80, 60));
+                        result.addClass(i.replaceFirst("[_*]", hint), 20, 10));
             }
 
             if (fileHints.isEmpty()) {
                 allImports.forEach(i ->
-                        result.addClass(i.replaceFirst("\\.[_*]", ""), 100, 60));
+                        result.addClass(i.replaceFirst("\\.[_*]", ""), 20, 10));
             }
         }
 
