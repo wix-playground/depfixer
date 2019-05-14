@@ -76,6 +76,11 @@ public class InternalRepoIndexer extends AbstractBazelIndexer {
             }
         }
 
+        if (targetPath == null) {
+            System.out.println("InternalRepoIndexer : ignoring jar " + jar);
+            return null;
+        }
+
         String fileName = external ?
                 directoryToIndex.resolve("external").resolve(targetPath).relativize(jar).toString() :
                 directoryToIndex.resolve(targetPath).relativize(jar).toString();
