@@ -97,7 +97,11 @@ abstract public class AbstractBazelIndexer {
 
         newlyIndexedJars.incrementAndGet();
 
-        JarFileProcessor.addClassesToCache(file, targetName, classToTarget);
+        try {
+            JarFileProcessor.addClassesToCache(file, targetName, classToTarget);
+        } catch (Exception e) {
+            System.out.println("Failed to handle jar [" + file + "] " + e.getMessage());
+        }
     }
 
     public final RepoCache index() {
