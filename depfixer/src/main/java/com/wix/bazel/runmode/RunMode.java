@@ -1,7 +1,6 @@
 package com.wix.bazel.runmode;
 
 public enum RunMode {
-    SOCIAL,
-    PARTIAL,
+    SOCIAL_MIGRATION,
     ISOLATED
 }

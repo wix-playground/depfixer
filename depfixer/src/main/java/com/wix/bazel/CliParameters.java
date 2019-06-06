@@ -148,7 +148,7 @@ public class CliParameters {
             "runLimit");
 
     private static Option cliRunMode = createOption("runMode",
-            "Valid values are, `SOCIAL` `PARTIAL` `ISOLATED`, default is `ISOLATED`",
+            "Valid values are, `ISOLATED` `SOCIAL_MIGRATION`, default is `ISOLATED`",
             "mode");
 
     private static Option cliIndexDir = createOption("indexDir",
