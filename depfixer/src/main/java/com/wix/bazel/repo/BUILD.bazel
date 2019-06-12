@@ -4,16 +4,16 @@ scala_library(
     name = "repo",
     srcs = ["//depfixer/src/main/java/com/wix/bazel/repo:sources"],
     deps = [
-        "//depfixer/src/main/java/com/wix/bazel/process",
         "//depfixer/src/main/java/com/wix/bazel/brokentarget",
-        "//depfixer/src/main/resources",
+        "//depfixer/src/main/java/com/wix/bazel/process",
         "//depfixer/src/main/java/com/wix/bazel/runmode",
-        "@com_wixpress_ci_labeldex_rest_client",
+        "//depfixer/src/main/resources",
         "@com_wixpress_ci_labeldex_common",
+        "@com_wixpress_ci_labeldex_rest_client",
         "@com_wixpress_wix_ci_rest_client",
-        "@org_scala_lang_scala_library",
         "@org_eclipse_jgit_org_eclipse_jgit",
-     ],
+        "@org_scala_lang_scala_library",
+    ],
 )
 
 filegroup(
