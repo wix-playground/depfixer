@@ -84,7 +84,7 @@ abstract public class AbstractBazelIndexer {
         return "n/a";
     }
 
-    private void indexFile(Path file, BasicFileAttributes attrs) throws IOException {
+    private void indexFile(Path file, BasicFileAttributes attrs) {
         if (!attrs.isRegularFile() || !jarNeedsToBeIndexed(file)) {
             return;
         }
@@ -136,7 +136,6 @@ abstract public class AbstractBazelIndexer {
             this.classToTarget.setTestTargets(testOnlyTargets);
     }
 
-    @SuppressWarnings("unchecked")
     private void loadFromDisk() {
         Path diskCopy = getDiskCopyFilename();
 
@@ -148,8 +147,9 @@ abstract public class AbstractBazelIndexer {
         try (FileInputStream fis = new FileInputStream(diskCopy.toFile())) {
             try (ObjectInputStream ois = new ObjectInputStream(new InflaterInputStream(fis))) {
                 String branch = (String) ois.readObject();
+                RunMode savedRunMode = (RunMode) ois.readObject();
 
-                if (currentBranch.equals(branch)) {
+                if (currentBranch.equals(branch) && savedRunMode == runMode) {
                     classToTarget = (RepoCache) ois.readObject();
                 } else {
                     nukeIndex();
@@ -158,8 +158,31 @@ abstract public class AbstractBazelIndexer {
         } catch (Exception e) {
             System.err.println("Failed to load index from disk");
             e.printStackTrace();
-
             nukeIndex();
+        }
+    }
+
+    private void saveToDisk() {
+        Path diskCopy = getDiskCopyFilename();
+
+        if (!Files.exists(diskCopy)) {
+            try {
+                Files.createDirectories(diskCopy.getParent());
+                Files.createFile(diskCopy);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(diskCopy.toFile())) {
+            try (ObjectOutputStream oos = new ObjectOutputStream(new DeflaterOutputStream(fos))) {
+                oos.writeObject(currentBranch);
+                oos.writeObject(runMode);
+                oos.writeObject(classToTarget);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to save index to disk");
+            e.printStackTrace();
         }
     }
 
@@ -172,7 +195,7 @@ abstract public class AbstractBazelIndexer {
         ProcessRunner.quiteExecute(directoryToIndex, Collections.emptyMap(), "rm", "-fr", ".git");
     }
 
-    private Duration time(String message, Runnable runnable) {
+    private void time(String message, Runnable runnable) {
         Instant start = Instant.now();
 
         runnable.run();
@@ -181,8 +204,6 @@ abstract public class AbstractBazelIndexer {
 
         Duration duration = Duration.between(start, end);
         System.out.println(this.getClass().getName() + " " + message + " " + duration);
-
-        return duration;
     }
 
     private <T> TimeResult<T> time(String message, Callable<T> callable) {
@@ -201,29 +222,6 @@ abstract public class AbstractBazelIndexer {
         System.out.println(this.getClass().getName() + " " + message + " " + duration);
 
         return new TimeResult<>(duration, res);
-    }
-
-    private void saveToDisk() {
-        Path diskCopy = getDiskCopyFilename();
-
-        if (!Files.exists(diskCopy)) {
-            try {
-                Files.createDirectories(diskCopy.getParent());
-                Files.createFile(diskCopy);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        try (FileOutputStream fos = new FileOutputStream(diskCopy.toFile())) {
-            try (ObjectOutputStream oos = new ObjectOutputStream(new DeflaterOutputStream(fos))) {
-                oos.writeObject(currentBranch);
-                oos.writeObject(classToTarget);
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to save index to disk");
-            e.printStackTrace();
-        }
     }
 
     private Path getDiskCopyFilename() {
