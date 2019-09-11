@@ -14,6 +14,7 @@ public class BrokenTargetData {
     protected String repoName;
 
     protected boolean testOnly;
+    protected boolean fromBep;
 
     public String getName() {
         return targetName;
@@ -24,7 +25,7 @@ public class BrokenTargetData {
     }
 
     public String getStream() {
-        String s = fullStream.substring(start, end);
+        String s = fromBep ? fullStream : fullStream.substring(start, end);
         int idx = type.equals("proto") ?
                 s.indexOf("java.lang.RuntimeException: Failed proto generation") :
                 s.indexOf("java.lang.RuntimeException: Build failed");

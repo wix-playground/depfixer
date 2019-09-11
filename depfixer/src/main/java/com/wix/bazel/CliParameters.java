@@ -19,6 +19,7 @@ public class CliParameters {
     private String indexDir;
     private List<String> bazelOpts;
     private boolean cleanMode;
+    private boolean bepMode;
 
     private CliParameters() {}
 
@@ -29,7 +30,8 @@ public class CliParameters {
                           RunMode runMode,
                           String indexDir,
                           List<String> bazelOpts,
-                          boolean cleanMode) {
+                          boolean cleanMode,
+                          boolean bepMode) {
         this.repoPath = repoPath;
         this.targets = targets;
         this.outputDir = outputDir;
@@ -38,6 +40,7 @@ public class CliParameters {
         this.indexDir = indexDir;
         this.bazelOpts = bazelOpts;
         this.cleanMode = cleanMode;
+        this.bepMode = bepMode;
     }
 
     private static CliParameters empty() {
@@ -55,6 +58,7 @@ public class CliParameters {
         cliOptions.addOption(cliRunMode);
         cliOptions.addOption(cliIndexDir);
         cliOptions.addOption(cleanModeOpt);
+        cliOptions.addOption(bepModeOpt);
 
         try {
 
@@ -72,7 +76,7 @@ public class CliParameters {
                     RunMode::valueOf, RunMode.ISOLATED);
             String indexDir = getOptionValue(cliParameters,"indexDir", Function.identity(), defaultIndexDir);
 
-            return new CliParameters(repoPath, targets, outputDir, runLimit, runMode, indexDir, parser.bazelArgs, cliParameters.hasOption("clean_mode"));
+            return new CliParameters(repoPath, targets, outputDir, runLimit, runMode, indexDir, parser.bazelArgs, cliParameters.hasOption("clean_mode"), cliParameters.hasOption("bep_mode"));
 
         } catch (Exception ex) {
             printHelp(cliOptions);
@@ -131,6 +135,10 @@ public class CliParameters {
         return cleanMode;
     }
 
+    public boolean isBepMode() {
+        return bepMode;
+    }
+
     private static Option cliRepo = createOption("repoPath",
             "Path to repo - default is current repo",
             "repo");
@@ -158,6 +166,10 @@ public class CliParameters {
     private static Option cleanModeOpt = createOption("cleanMode",
             "Use depfixer to fix repo after all deps were cleared",
             "clean_mode", false);
+
+    private static Option bepModeOpt = createOption("bepMode",
+            "Use depfixer to fix repo using Build Event Protocol output. This is usually used when running Depfixer with RBE as using stdout/stderr stream is not reliable (missing errors in stderr/nondeterministic order)",
+            "bep_mode", false);
 
     private static Option createOption(String argName, String description, String optionName) {
         return createOption(argName, description, optionName, true);
