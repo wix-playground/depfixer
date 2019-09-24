@@ -35,6 +35,8 @@ public class GlobalExternalCache {
     private final RunMode runMode;
     private final boolean cleanMode;
 
+
+
     public GlobalExternalCache(Set<String> tetOnlyTargets, String srcWorkspaceName, RunMode runMode, boolean cleanMode) {
         this.cache = new RepoCache(tetOnlyTargets);
         this.srcWorkspaceName = srcWorkspaceName;
@@ -102,7 +104,10 @@ public class GlobalExternalCache {
                             .filter(Objects::nonNull)
                             .findFirst();
 
-            maybeLabels.ifPresent(strings -> strings.forEach(l -> cache.put(null, fqn, l)));
+            maybeLabels
+                    .ifPresent(strings ->
+                            strings.stream().filter(Targets::notExcluded)
+                            .forEach(l -> cache.put(null, fqn, l)));
         }
     }
 

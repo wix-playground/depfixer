@@ -27,7 +27,8 @@ public class ExternalRepoIndexer extends AbstractBazelIndexer {
     protected List<String> gitIgnoreContent() {
         return Arrays.asList(
                 workspaceName,
-                "com_google_collections_google_collections/");
+                "com_google_collections_google_collections/",
+                "com_wix_wix_embedded_mysql_download_and_extract_jar_with_dependencies/");
     }
 
     @Override

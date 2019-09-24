@@ -45,6 +45,8 @@ abstract public class AbstractBazelIndexer {
     private final Git git;
     private final String currentBranch;
 
+    private final static String INDEX_VERSION = "1.0";
+
     AbstractBazelIndexer(Path repoRoot, Path persistencePath, String workspaceName,
                          RunMode runMode, Path directoryToIndex,
                          Set<String> testOnlyTargets) {
@@ -146,6 +148,19 @@ abstract public class AbstractBazelIndexer {
 
         try (FileInputStream fis = new FileInputStream(diskCopy.toFile())) {
             try (ObjectInputStream ois = new ObjectInputStream(new InflaterInputStream(fis))) {
+                String currentIndexVersion = loadIndexVersion(ois);
+                handleIndexByVersion(currentIndexVersion, ois);
+            }
+        } catch (Exception e) {
+            nukeIndex();
+        }
+    }
+
+    private void handleIndexByVersion(String version, ObjectInputStream ois) {
+        if (version.equals("-1.0")) {
+            nukeIndex();
+        } else {
+            try {
                 String branch = (String) ois.readObject();
                 RunMode savedRunMode = (RunMode) ois.readObject();
 
@@ -154,11 +169,18 @@ abstract public class AbstractBazelIndexer {
                 } else {
                     nukeIndex();
                 }
+            } catch (Exception e) {
+                System.err.println("Failed to load index from disk " + e.getMessage());
+                nukeIndex();
             }
+        }
+    }
+
+    private String loadIndexVersion(ObjectInputStream ois) {
+        try {
+            return (String) ois.readObject();
         } catch (Exception e) {
-            System.err.println("Failed to load index from disk");
-            e.printStackTrace();
-            nukeIndex();
+            return "-1.0";
         }
     }
 
@@ -176,6 +198,7 @@ abstract public class AbstractBazelIndexer {
 
         try (FileOutputStream fos = new FileOutputStream(diskCopy.toFile())) {
             try (ObjectOutputStream oos = new ObjectOutputStream(new DeflaterOutputStream(fos))) {
+                oos.writeObject(INDEX_VERSION);
                 oos.writeObject(currentBranch);
                 oos.writeObject(runMode);
                 oos.writeObject(classToTarget);
