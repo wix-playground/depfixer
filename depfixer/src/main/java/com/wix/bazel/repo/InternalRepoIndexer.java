@@ -1,7 +1,5 @@
 package com.wix.bazel.repo;
 
-import com.wix.bazel.runmode.RunMode;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,16 +14,16 @@ public class InternalRepoIndexer extends AbstractBazelIndexer {
     private final Path externalPath;
 
     public InternalRepoIndexer(Path repoRoot, Path persistencePath, String workspaceName,
-                               RunMode runMode, Path directoryToScan, Set<String> testOnlyTargets,
+                               Path directoryToScan, Set<String> testOnlyTargets,
                                Path externalPath) {
-        super(repoRoot, persistencePath, workspaceName, runMode, directoryToScan, testOnlyTargets);
+        super(repoRoot, persistencePath, workspaceName, directoryToScan, testOnlyTargets);
         this.externalPath = externalPath;
     }
 
     @Override
     protected List<String> gitIgnoreContent() {
         return Arrays.asList(
-                runMode == RunMode.ISOLATED ? "external/" : "",
+                "",
                 "external/" + workspaceName + "/",
                 "external/bazel_tools/",
                 "external/io_bazel_rules/",

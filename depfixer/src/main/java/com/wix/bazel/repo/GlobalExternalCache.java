@@ -1,7 +1,6 @@
 package com.wix.bazel.repo;
 
 import com.wix.bazel.process.RunWithRetries;
-import com.wix.bazel.runmode.RunMode;
 import com.wixpress.ci.labeldex.domain.SymbolType;
 import com.wixpress.ci.labeldex.model.Bulk2ndPartyLabels;
 import com.wixpress.ci.labeldex.model.Bulk3rdPartyLabels;
@@ -32,15 +31,13 @@ public class GlobalExternalCache {
 
     private final String srcWorkspaceName;
     private RepoCache cache;
-    private final RunMode runMode;
     private final boolean cleanMode;
 
 
 
-    public GlobalExternalCache(Set<String> tetOnlyTargets, String srcWorkspaceName, RunMode runMode, boolean cleanMode) {
+    public GlobalExternalCache(Set<String> tetOnlyTargets, String srcWorkspaceName, boolean cleanMode) {
         this.cache = new RepoCache(tetOnlyTargets);
         this.srcWorkspaceName = srcWorkspaceName;
-        this.runMode = runMode;
         this.cleanMode = cleanMode;
     }
 
@@ -63,7 +60,7 @@ public class GlobalExternalCache {
         BulkLabelsSocialMode clientLabels =
                 RunWithRetries.run(5, 500L,
                         () -> labeldexrestClient.findSocialBulkLabels(symbols,
-                                srcWorkspaceName,runMode != RunMode.ISOLATED)
+                                srcWorkspaceName, true)
                 );
 
         if (clientLabels == null) {

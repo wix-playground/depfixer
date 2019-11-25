@@ -1,6 +1,5 @@
 package com.wix.bazel;
 
-import com.wix.bazel.runmode.RunMode;
 import org.apache.commons.cli.*;
 
 import java.nio.file.Paths;
@@ -15,19 +14,18 @@ public class CliParameters {
     private String targets;
     private String outputDir;
     private int runLimit;
-    private RunMode runMode;
     private String indexDir;
     private List<String> bazelOpts;
     private boolean cleanMode;
     private boolean bepMode;
 
-    private CliParameters() {}
+    private CliParameters() {
+    }
 
     private CliParameters(String repoPath,
                           String targets,
                           String outputDir,
                           int runLimit,
-                          RunMode runMode,
                           String indexDir,
                           List<String> bazelOpts,
                           boolean cleanMode,
@@ -36,7 +34,6 @@ public class CliParameters {
         this.targets = targets;
         this.outputDir = outputDir;
         this.runLimit = runLimit;
-        this.runMode = runMode;
         this.indexDir = indexDir;
         this.bazelOpts = bazelOpts;
         this.cleanMode = cleanMode;
@@ -55,7 +52,6 @@ public class CliParameters {
         cliOptions.addOption(cliTargets);
         cliOptions.addOption(cliOutputDir);
         cliOptions.addOption(cliRunLimit);
-        cliOptions.addOption(cliRunMode);
         cliOptions.addOption(cliIndexDir);
         cliOptions.addOption(cleanModeOpt);
         cliOptions.addOption(bepModeOpt);
@@ -72,11 +68,9 @@ public class CliParameters {
             String outputDir = getOptionValue(cliParameters, "outputDir");
             int runLimit = getOptionValue(cliParameters, "runLimit",
                     Integer::parseInt, Integer.MAX_VALUE);
-            RunMode runMode = getOptionValue(cliParameters, "mode",
-                    RunMode::valueOf, RunMode.ISOLATED);
-            String indexDir = getOptionValue(cliParameters,"indexDir", Function.identity(), defaultIndexDir);
+            String indexDir = getOptionValue(cliParameters, "indexDir", Function.identity(), defaultIndexDir);
 
-            return new CliParameters(repoPath, targets, outputDir, runLimit, runMode, indexDir, parser.bazelArgs, cliParameters.hasOption("clean_mode"), cliParameters.hasOption("bep_mode"));
+            return new CliParameters(repoPath, targets, outputDir, runLimit, indexDir, parser.bazelArgs, cliParameters.hasOption("clean_mode"), cliParameters.hasOption("bep_mode"));
 
         } catch (Exception ex) {
             printHelp(cliOptions);
@@ -108,19 +102,17 @@ public class CliParameters {
     public String getRepoPath() {
         return repoPath;
     }
+
     public String getTargets() {
         return targets;
     }
+
     public String getOutputDir() {
         return outputDir;
     }
 
     public int getRunLimit() {
         return runLimit;
-    }
-
-    public RunMode getRunMode() {
-        return runMode;
     }
 
     public String getIndexDir() {
@@ -154,10 +146,6 @@ public class CliParameters {
     private static Option cliRunLimit = createOption("runLimit",
             "Maximum times to run, if not specified, default is MAXINT",
             "runLimit");
-
-    private static Option cliRunMode = createOption("runMode",
-            "Valid values are, `ISOLATED` `SOCIAL_MIGRATION`, default is `ISOLATED`",
-            "mode");
 
     private static Option cliIndexDir = createOption("indexDir",
             "Path to save different indexes",

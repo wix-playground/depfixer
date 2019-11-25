@@ -2,7 +2,6 @@ package com.wix.bazel.repo;
 
 import com.wix.bazel.process.ExecuteResult;
 import com.wix.bazel.process.ProcessRunner;
-import com.wix.bazel.runmode.RunMode;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 
@@ -35,7 +34,6 @@ abstract public class AbstractBazelIndexer {
 
     final Path repoRoot;
     final String workspaceName;
-    final RunMode runMode;
     final Path directoryToIndex;
 
     private RepoCache classToTarget;
@@ -48,11 +46,10 @@ abstract public class AbstractBazelIndexer {
     private final static String INDEX_VERSION = "1.0";
 
     AbstractBazelIndexer(Path repoRoot, Path persistencePath, String workspaceName,
-                         RunMode runMode, Path directoryToIndex,
+                         Path directoryToIndex,
                          Set<String> testOnlyTargets) {
         this.repoRoot = repoRoot;
         this.workspaceName = workspaceName;
-        this.runMode = runMode;
         this.directoryToIndex = directoryToIndex;
         this.persistencePath = persistencePath;
 
@@ -162,15 +159,14 @@ abstract public class AbstractBazelIndexer {
         } else {
             try {
                 String branch = (String) ois.readObject();
-                RunMode savedRunMode = (RunMode) ois.readObject();
 
-                if (currentBranch.equals(branch) && savedRunMode == runMode) {
+                if (currentBranch.equals(branch)) {
                     classToTarget = (RepoCache) ois.readObject();
                 } else {
                     nukeIndex();
                 }
             } catch (Exception e) {
-                System.err.println("Failed to load index from disk " + e.getMessage());
+                System.err.println("Failed to load index from disk, going to nuke the index...");
                 nukeIndex();
             }
         }
@@ -200,7 +196,6 @@ abstract public class AbstractBazelIndexer {
             try (ObjectOutputStream oos = new ObjectOutputStream(new DeflaterOutputStream(fos))) {
                 oos.writeObject(INDEX_VERSION);
                 oos.writeObject(currentBranch);
-                oos.writeObject(runMode);
                 oos.writeObject(classToTarget);
             }
         } catch (Exception e) {
