@@ -21,6 +21,9 @@ abstract public class AbstractBrokenTargetExtractor {
     private static Pattern failingFileAndTargetProto =
             Pattern.compile("ERROR: (?:[^:]+):\\d+:\\d+: Couldn't build file .+ creating scalapb files ([^\\s]+)_srcjar[^\n]+");
 
+    private static Pattern failingFileAndTargetJavaTest =
+            Pattern.compile("ERROR: (?:[^:]+):\\d+:\\d+: Couldn't build file ([^\\s]+)\\.jar: Building ([^\\s]+)\\.jar");
+
 
     private final Path repoPath, externalRepoPath;
 
@@ -34,10 +37,12 @@ abstract public class AbstractBrokenTargetExtractor {
         Collection<BrokenTargetData> scalaTargets = collectBrokenTargets(failingFileAndTarget_K, "scala");
         Collection<BrokenTargetData> javaTargets = collectBrokenTargets(failingFileAndTargetJava, "java");
         Collection<BrokenTargetData> protoTargets = collectBrokenTargets(failingFileAndTargetProto, "proto");
+        Collection<BrokenTargetData> javaTestTargets = collectBrokenTargets(failingFileAndTargetJavaTest, "java_test");
 
         List<BrokenTargetData> allTargets = new ArrayList<>(scalaTargets);
         allTargets.addAll(javaTargets);
         allTargets.addAll(protoTargets);
+        allTargets.addAll(javaTestTargets);
         allTargets.sort(Comparator.comparingInt(x -> x.start));
 
         for (int i = 0; i < allTargets.size() - 1; i++) {
