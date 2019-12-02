@@ -115,8 +115,27 @@ abstract public class AbstractBrokenTargetExtractor {
             System.out.println("Target " + data.targetName + " path is: " + targetPath);
 
             assert targetPath != null;
-            data.targetName = (data.external ? "@" : "//") + targetPath.toString() + ":" +
-                    targetPath.relativize(Paths.get(data.targetName));
+            String ruleName = targetPath.relativize(Paths.get(data.targetName)).toString();
+
+            if (ruleName.startsWith("lib") && data.type.equals("java_test")) {
+                Path buildFile = repoPath.resolve(targetPath.resolve("BUILD.bazel"));
+
+                if (!Files.isRegularFile(buildFile)) {
+                    buildFile = repoPath.resolve(targetPath.resolve("BUILD"));
+                }
+
+                try {
+                    String content = new String(Files.readAllBytes(buildFile));
+                    if (!content.contains("\"" + ruleName + "\"")) {
+                        ruleName = ruleName.substring("lib".length());
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+
+            data.targetName = (data.external ? "@" : "//") + targetPath.toString() + ":" + ruleName;
 
             if (data.external) {
                 data.targetName = data.targetName.replaceFirst("/", "//");
