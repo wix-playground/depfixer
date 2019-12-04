@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,7 +19,7 @@ abstract public class AbstractBrokenTargetExtractor {
             Pattern.compile("ERROR: (?:[^:]+):\\d+:\\d+: Couldn't build file .+ creating scalapb files ([^\\s]+)_srcjar[^\n]+");
 
     private static Pattern failingFileAndTargetJavaTest =
-            Pattern.compile("ERROR: (?:[^:]+):\\d+:\\d+: Couldn't build file ([^\\s]+)\\.jar: Building ([^\\s]+)\\.jar");
+            Pattern.compile("ERROR: (?:[^:]+):\\d+:\\d+: Couldn't build file ([^\\s]+)\\.jar: Building ([^\\s]+)\\.jar[^\n]+");
 
 
     private final Path repoPath, externalRepoPath;
@@ -39,10 +36,12 @@ abstract public class AbstractBrokenTargetExtractor {
         Collection<BrokenTargetData> protoTargets = collectBrokenTargets(failingFileAndTargetProto, "proto");
         Collection<BrokenTargetData> javaTestTargets = collectBrokenTargets(failingFileAndTargetJavaTest, "java_test");
 
+        Set<BrokenTargetData> allJavaTargets = new HashSet<>(javaTargets);
+        allJavaTargets.addAll(javaTestTargets);
+
         List<BrokenTargetData> allTargets = new ArrayList<>(scalaTargets);
-        allTargets.addAll(javaTargets);
+        allTargets.addAll(allJavaTargets);
         allTargets.addAll(protoTargets);
-        allTargets.addAll(javaTestTargets);
         allTargets.sort(Comparator.comparingInt(x -> x.start));
 
         for (int i = 0; i < allTargets.size() - 1; i++) {
@@ -117,7 +116,8 @@ abstract public class AbstractBrokenTargetExtractor {
             assert targetPath != null;
             String ruleName = targetPath.relativize(Paths.get(data.targetName)).toString();
 
-            if (ruleName.startsWith("lib") && data.type.equals("java_test")) {
+            if ((ruleName.startsWith("lib") || ruleName.endsWith("_java") || ruleName.endsWith("java-hjar")) &&
+                    data.type.equals("java_test")) {
                 Path buildFile = repoPath.resolve(targetPath.resolve("BUILD.bazel"));
 
                 if (!Files.isRegularFile(buildFile)) {
@@ -127,7 +127,9 @@ abstract public class AbstractBrokenTargetExtractor {
                 try {
                     String content = new String(Files.readAllBytes(buildFile));
                     if (!content.contains("\"" + ruleName + "\"")) {
-                        ruleName = ruleName.substring("lib".length());
+                        ruleName = ruleName.replace("lib", "")
+                                .replace("java-hjar", "")
+                                .replace("_java", "");
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
