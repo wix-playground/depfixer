@@ -36,7 +36,8 @@ public class InternalRepoIndexer extends AbstractBazelIndexer {
                 "*-deployable.jar",
                 "*_test_runner.jar",
                 "main_dependencies.jar",
-                "test_dependencies.jar"
+                "test_dependencies.jar",
+                "*_scalapb.jar"
         );
     }
 

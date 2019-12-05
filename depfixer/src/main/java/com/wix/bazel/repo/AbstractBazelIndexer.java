@@ -43,7 +43,7 @@ abstract public class AbstractBazelIndexer {
     private final Git git;
     private final String currentBranch;
 
-    private final static String INDEX_VERSION = "1.0";
+    private final static String INDEX_VERSION = "1.0.1";
 
     AbstractBazelIndexer(Path repoRoot, Path persistencePath, String workspaceName,
                          Path directoryToIndex,
@@ -155,6 +155,8 @@ abstract public class AbstractBazelIndexer {
 
     private void handleIndexByVersion(String version, ObjectInputStream ois) {
         if (version.equals("-1.0")) {
+            nukeIndex();
+        } else if (version.equals("1.0")) {
             nukeIndex();
         } else {
             try {
