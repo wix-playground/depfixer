@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.function.Function;
 
-public class CliParameters  {
+public class CliParameters {
 
     private String repoPath;
     private String targets;
