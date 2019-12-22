@@ -109,8 +109,7 @@ public class GlobalExternalCache {
     }
 
     private Stream<Label> symbolLabels(SymbolLabels labels) {
-        Supplier<Stream<Label>> labelsStreamSupplier = () -> JavaConverters.setAsJavaSet(labels.labels()).stream()
-                .filter(l -> cleanMode || !l.workspace().equals(srcWorkspaceName));
+        Supplier<Stream<Label>> labelsStreamSupplier = () -> JavaConverters.setAsJavaSet(labels.labels()).stream();
 
         Supplier<Stream<Label>> fwLabelsStreamSupplier = () ->
                 labelsStreamSupplier.get().filter(l -> l.workspace().equals("wix_platform_wix_framework"));
