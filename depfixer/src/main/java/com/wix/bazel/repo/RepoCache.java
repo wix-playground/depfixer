@@ -35,6 +35,9 @@ public class RepoCache implements Serializable  {
         for (String cls : classes) {
             TargetsHolder holder = map.get(cls);
 
+            if (holder == null)
+                continue;
+
             holder.clear(srcjar);
 
             if (holder.isEmpty())
