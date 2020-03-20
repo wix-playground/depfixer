@@ -26,16 +26,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GlobalExternalCache {
-    private final LabeldexRestClient labeldexrestClient = new LabeldexRestClient(
-            new RestClient("http://bo.wix.com/labeldex-webapp", 3000));
+    private LabeldexRestClient labeldexrestClient;
 
     private final String srcWorkspaceName;
     private RepoCache cache;
     private final boolean cleanMode;
 
-
-
-    public GlobalExternalCache(Set<String> tetOnlyTargets, String srcWorkspaceName, boolean cleanMode) {
+    public GlobalExternalCache(String labeldexUrl, Set<String> tetOnlyTargets, String srcWorkspaceName, boolean cleanMode) {
+        this.labeldexrestClient = new LabeldexRestClient(new RestClient(labeldexUrl, 3000));
         this.cache = new RepoCache(tetOnlyTargets);
         this.srcWorkspaceName = srcWorkspaceName;
         this.cleanMode = cleanMode;

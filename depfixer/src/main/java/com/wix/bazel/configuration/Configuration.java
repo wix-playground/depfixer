@@ -61,6 +61,10 @@ public class Configuration {
         return find("bep_mode").map(Boolean::valueOf).orElse(false);
     }
 
+    public String getLabeldexUrl() {
+        return find("labeldex_url").orElse(null);
+    }
+
     public interface ConfigurationSource {
         Optional<String> find(String key);
 
