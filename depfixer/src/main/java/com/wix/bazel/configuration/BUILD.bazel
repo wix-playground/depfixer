@@ -1,0 +1,7 @@
+package(default_visibility = ["//visibility:public"])
+
+java_library(
+    name = "configuration",
+    srcs = glob(["*.java"]),
+    deps = ["@commons_cli_commons_cli"],
+)
