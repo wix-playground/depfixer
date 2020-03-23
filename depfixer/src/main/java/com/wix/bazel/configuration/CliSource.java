@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
 
-public class CliParameters implements Configuration.ConfigurationSource {
+public class CliSource implements Configuration.ConfigurationSource {
     private static Option cliRepo = createOption("repoPath",
             "Path to repo - default is current repo",
             "repo");
@@ -29,24 +29,28 @@ public class CliParameters implements Configuration.ConfigurationSource {
     private static Option bepModeOpt = createOption("bepMode",
             "Use depfixer to fix repo using Build Event Protocol output. This is usually used when running Depfixer with RBE as using stdout/stderr stream is not reliable (missing errors in stderr/nondeterministic order)",
             "bep_mode", false);
+    private static Option labeldexUrl = createOption("labeldexUrl",
+            "URL for Labeldex service",
+            "labeldex_url");
+
     private List<String> bazelOpts;
     private CommandLine commandLine;
 
-    private CliParameters() {
+    private CliSource() {
     }
 
-    private CliParameters(
+    private CliSource(
             List<String> bazelOpts,
             CommandLine commandLine) {
         this.bazelOpts = bazelOpts;
         this.commandLine = commandLine;
     }
 
-    private static CliParameters empty() {
-        return new CliParameters();
+    private static CliSource empty() {
+        return new CliSource();
     }
 
-    public static CliParameters parseCliParameters(String[] args) {
+    public static CliSource parseCliParameters(String[] args) {
 
         Options cliOptions = new Options();
         cliOptions.addOption(cliRepo);
@@ -56,13 +60,14 @@ public class CliParameters implements Configuration.ConfigurationSource {
         cliOptions.addOption(cliIndexDir);
         cliOptions.addOption(cleanModeOpt);
         cliOptions.addOption(bepModeOpt);
+        cliOptions.addOption(labeldexUrl);
 
         try {
 
             Parser parser = new Parser();
             CommandLine cliParameters = parser.parse(cliOptions, args);
 
-            return new CliParameters(parser.bazelArgs, cliParameters);
+            return new CliSource(parser.bazelArgs, cliParameters);
 
         } catch (Exception ex) {
             printHelp(cliOptions);
@@ -81,19 +86,24 @@ public class CliParameters implements Configuration.ConfigurationSource {
     }
 
     private static Option createOption(String argName, String description, String optionName, boolean hasArg) {
-        OptionBuilder.withDescription(description);
-
+        Option.Builder builder = Option.builder().desc(description);
         if (hasArg) {
-            OptionBuilder.withArgName(argName);
-            OptionBuilder.hasArg();
+            builder.argName(argName);
+            builder.hasArg();
         }
+        builder.longOpt(optionName);
 
-        return OptionBuilder.create(optionName);
+        return builder.build();
     }
 
     @Override
     public Optional<String> find(String key) {
-        return Optional.ofNullable(this.commandLine.getOptionValue(key));
+        if (commandLine.hasOption(key)) {
+            String value = Optional.ofNullable(commandLine.getOptionValue(key)).orElse("true");
+            return Optional.of(value);
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override

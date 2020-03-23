@@ -1,0 +1,30 @@
+java_test(
+    name = "ConfigurationTest",
+    srcs = ["ConfigurationTest.java"],
+    deps = [
+        "//depfixer/src/main/java/com/wix/bazel/configuration",
+        "@junit_junit",
+    ],
+)
+
+java_test(
+    name = "ClasspathConfigurationSourceTest",
+    srcs = [
+        "ClasspathConfigurationSourceTest.java",
+    ],
+    runtime_deps = ["//depfixer/src/test/resources"],
+    deps = [
+        "//depfixer/src/main/java/com/wix/bazel/configuration",
+        "@junit_junit",
+    ],
+)
+
+java_test(
+    name = "CliSourceTest",
+    srcs = ["CliSourceTest.java"],
+    deps = [
+        "//depfixer/src/main/java/com/wix/bazel/configuration",
+        "@commons_cli_commons_cli",
+        "@junit_junit",
+    ],
+)

@@ -2,17 +2,7 @@ package com.wix.bazel.repo;
 
 import com.wix.bazel.process.RunWithRetries;
 import com.wixpress.ci.labeldex.domain.SymbolType;
-import com.wixpress.ci.labeldex.model.Bulk2ndPartyLabels;
-import com.wixpress.ci.labeldex.model.Bulk3rdPartyLabels;
-import com.wixpress.ci.labeldex.model.BulkLabels;
-import com.wixpress.ci.labeldex.model.BulkLabelsSocialMode;
-import com.wixpress.ci.labeldex.model.BulkSymbols;
-import com.wixpress.ci.labeldex.model.SymbolLabels;
-import com.wixpress.ci.labeldex.model.Symbol2ndPartyLabels;
-import com.wixpress.ci.labeldex.model.Symbol3rdPartyLabels;
-import com.wixpress.ci.labeldex.model.SecondPartyLabel;
-import com.wixpress.ci.labeldex.model.ThirdPartyLabel;
-import com.wixpress.ci.labeldex.model.Label;
+import com.wixpress.ci.labeldex.model.*;
 import com.wixpress.ci.labeldex.restclient.LabeldexRestClient;
 import com.wixpress.ci.rest.client.RestClient;
 import scala.Enumeration;
@@ -26,14 +16,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GlobalExternalCache {
-    private LabeldexRestClient labeldexrestClient;
-
+    private static final int TIMEOUT_MILLIS = 3000;
     private final String srcWorkspaceName;
-    private RepoCache cache;
     private final boolean cleanMode;
+    private LabeldexRestClient labeldexrestClient;
+    private RepoCache cache;
 
     public GlobalExternalCache(String labeldexUrl, Set<String> tetOnlyTargets, String srcWorkspaceName, boolean cleanMode) {
-        this.labeldexrestClient = new LabeldexRestClient(new RestClient(labeldexUrl, 3000));
+
+        this.labeldexrestClient = new LabeldexRestClient(new RestClient(labeldexUrl, TIMEOUT_MILLIS));
         this.cache = new RepoCache(tetOnlyTargets);
         this.srcWorkspaceName = srcWorkspaceName;
         this.cleanMode = cleanMode;
@@ -102,7 +93,7 @@ public class GlobalExternalCache {
             maybeLabels
                     .ifPresent(strings ->
                             strings.stream().filter(Targets::notExcluded)
-                            .forEach(l -> cache.put(null, fqn, l)));
+                                    .forEach(l -> cache.put(null, fqn, l)));
         }
     }
 
