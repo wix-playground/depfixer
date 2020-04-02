@@ -18,16 +18,15 @@ import java.util.stream.Stream;
 public class GlobalExternalCache {
     private static final int TIMEOUT_MILLIS = 3000;
     private final String srcWorkspaceName;
-    private final boolean cleanMode;
+    private final TargetsStore targetsStore;
     private LabeldexRestClient labeldexrestClient;
     private RepoCache cache;
 
-    public GlobalExternalCache(String labeldexUrl, Set<String> tetOnlyTargets, String srcWorkspaceName, boolean cleanMode) {
-
+    public GlobalExternalCache(String labeldexUrl, TargetsStore targetsStore, String srcWorkspaceName) {
         this.labeldexrestClient = new LabeldexRestClient(new RestClient(labeldexUrl, TIMEOUT_MILLIS));
-        this.cache = new RepoCache(tetOnlyTargets);
+        this.cache = new RepoCache(targetsStore);
+        this.targetsStore = targetsStore;
         this.srcWorkspaceName = srcWorkspaceName;
-        this.cleanMode = cleanMode;
     }
 
     public RepoCache get(List<String> classes) {
@@ -92,7 +91,9 @@ public class GlobalExternalCache {
 
             maybeLabels
                     .ifPresent(strings ->
-                            strings.stream().filter(Targets::notExcluded)
+                            strings.stream()
+                                    .filter(Targets::notExcluded)
+                                    .filter(t -> !targetsStore.ignoreTarget(t))
                                     .forEach(l -> cache.put(null, fqn, l)));
         }
     }

@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -14,9 +13,9 @@ public class InternalRepoIndexer extends AbstractBazelIndexer {
     private final Path externalPath;
 
     public InternalRepoIndexer(Path repoRoot, Path persistencePath, String workspaceName,
-                               Path directoryToScan, Set<String> testOnlyTargets,
+                               Path directoryToScan, TargetsStore targetsStore,
                                Path externalPath) {
-        super(repoRoot, persistencePath, workspaceName, directoryToScan, testOnlyTargets);
+        super(repoRoot, persistencePath, workspaceName, directoryToScan, targetsStore);
         this.externalPath = externalPath;
     }
 

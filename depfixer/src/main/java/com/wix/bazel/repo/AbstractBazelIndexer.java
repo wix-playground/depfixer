@@ -43,18 +43,18 @@ abstract public class AbstractBazelIndexer {
     private final Git git;
     private final String currentBranch;
 
-    private final static String INDEX_VERSION = "1.0.1";
+    private final static String INDEX_VERSION = "1.0.2";
 
     AbstractBazelIndexer(Path repoRoot, Path persistencePath, String workspaceName,
                          Path directoryToIndex,
-                         Set<String> testOnlyTargets) {
+                         TargetsStore targetsStore) {
         this.repoRoot = repoRoot;
         this.workspaceName = workspaceName;
         this.directoryToIndex = directoryToIndex;
         this.persistencePath = persistencePath;
 
         this.currentBranch = getCurrentBranch();
-        initFromDisk(testOnlyTargets);
+        initFromDisk(targetsStore);
         this.git = time("git init: ", this::initGit).result;
     }
 
@@ -126,13 +126,13 @@ abstract public class AbstractBazelIndexer {
         System.out.println(this.getClass().getName() + " total jars: " + newlyIndexedJars.get());
     }
 
-    private void initFromDisk(Set<String> testOnlyTargets) {
+    private void initFromDisk(TargetsStore targetsStore) {
         time("loading index from disk", this::loadFromDisk);
 
         if (this.classToTarget == null)
-            this.classToTarget = new RepoCache(testOnlyTargets);
+            this.classToTarget = new RepoCache(targetsStore);
         else
-            this.classToTarget.setTestTargets(testOnlyTargets);
+            this.classToTarget.setTargetStore(targetsStore);
     }
 
     private void loadFromDisk() {
@@ -154,9 +154,7 @@ abstract public class AbstractBazelIndexer {
     }
 
     private void handleIndexByVersion(String version, ObjectInputStream ois) {
-        if (version.equals("-1.0")) {
-            nukeIndex();
-        } else if (version.equals("1.0")) {
+        if (!INDEX_VERSION.equals(version)) {
             nukeIndex();
         } else {
             try {

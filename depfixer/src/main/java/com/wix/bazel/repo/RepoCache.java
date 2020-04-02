@@ -7,17 +7,20 @@ import java.util.*;
 
 public class RepoCache implements Serializable  {
     private Map<String, TargetsHolder> map = new HashMap<>();
-    private Set<String> testTargets;
+    private TargetsStore targetsStore;
     private Map<String, Set<String>> jarClasses = new HashMap<>();
 
-    public RepoCache(Set<String> testTargets) {
-        this.testTargets = testTargets;
+    public RepoCache(TargetsStore targetsStore) {
+        this.targetsStore = targetsStore;
     }
 
     public void put(String srcjar, String cls, String target) {
+        if (targetsStore.ignoreTarget(target))
+            return;
+
         TargetsHolder holder = map.computeIfAbsent(cls, k -> new TargetsHolder());
 
-        if (testTargets.contains(target)) {
+        if (targetsStore.isTestOnly(target)) {
             holder.setTestTarget(srcjar, target);
         } else {
             holder.setProdTarget(srcjar, target);
@@ -63,7 +66,7 @@ public class RepoCache implements Serializable  {
         return map.keySet();
     }
 
-    public void setTestTargets(Set<String> testTargets) {
-        this.testTargets = testTargets;
+    public void setTargetStore(TargetsStore targetStore) {
+        this.targetsStore = targetStore;
     }
 }

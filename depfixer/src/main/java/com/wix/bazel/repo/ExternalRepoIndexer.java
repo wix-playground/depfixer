@@ -3,13 +3,12 @@ package com.wix.bazel.repo;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 public class ExternalRepoIndexer extends AbstractBazelIndexer {
 
     public ExternalRepoIndexer(Path repoRoot, Path persistencePath, String workspaceName,
-                               Path directoryToScan, Set<String> testOnlyTargets) {
-        super(repoRoot, persistencePath, workspaceName, directoryToScan, testOnlyTargets);
+                               Path directoryToScan, TargetsStore targetsStore) {
+        super(repoRoot, persistencePath, workspaceName, directoryToScan, targetsStore);
     }
 
     @Override
