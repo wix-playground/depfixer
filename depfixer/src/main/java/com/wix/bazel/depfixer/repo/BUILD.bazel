@@ -1,0 +1,23 @@
+package(default_visibility = ["//visibility:public"])
+
+scala_library(
+    name = "repo",
+    srcs = [":sources"],
+    deps = [
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/brokentarget",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/configuration",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/process",
+        "//depfixer/src/main/resources",
+        "@wix_ci//labeldex/labeldex-common",
+        "@wix_ci//labeldex/labeldex-rest-client",
+        "@wix_ci//rest-client:wix-ci-rest-client",
+        "@org_eclipse_jgit_org_eclipse_jgit",
+        "@org_scala_lang_scala_library",
+    ],
+)
+
+filegroup(
+    name = "sources",
+    srcs = glob(["*.java"]),
+    visibility = ["__pkg__"],
+)

@@ -1,6 +1,5 @@
 package com.wix.bazel.depfixer.configuration;
 
-import com.wix.bazel.configuration.ClasspathSource;
 import org.junit.Test;
 
 import java.util.Optional;

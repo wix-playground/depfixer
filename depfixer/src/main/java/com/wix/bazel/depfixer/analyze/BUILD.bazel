@@ -1,0 +1,16 @@
+package(default_visibility = ["//visibility:public"])
+
+scala_library(
+    name = "analyze",
+    srcs = [":sources"],
+    deps = [
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/brokentarget",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/repo",
+    ],
+)
+
+filegroup(
+    name = "sources",
+    srcs = glob(["*.java"]),
+    visibility = ["__pkg__"],
+)

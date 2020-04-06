@@ -2,7 +2,7 @@ java_test(
     name = "ConfigurationTest",
     srcs = ["ConfigurationTest.java"],
     deps = [
-        "//depfixer/src/main/java/com/wix/bazel/configuration",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/configuration",
         "@junit_junit",
     ],
 )
@@ -14,7 +14,7 @@ java_test(
     ],
     runtime_deps = ["//depfixer/src/test/resources"],
     deps = [
-        "//depfixer/src/main/java/com/wix/bazel/configuration",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/configuration",
         "@junit_junit",
     ],
 )
@@ -23,7 +23,7 @@ java_test(
     name = "CliSourceTest",
     srcs = ["CliSourceTest.java"],
     deps = [
-        "//depfixer/src/main/java/com/wix/bazel/configuration",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/configuration",
         "@commons_cli_commons_cli",
         "@junit_junit",
     ],

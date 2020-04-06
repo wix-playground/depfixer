@@ -1,0 +1,12 @@
+package(default_visibility = ["//visibility:public"])
+
+scala_library(
+    name = "process",
+    srcs = [":sources"],
+)
+
+filegroup(
+    name = "sources",
+    srcs = glob(["*.java"]),
+    visibility = ["__pkg__"],
+)

@@ -1,0 +1,18 @@
+package(default_visibility = ["//visibility:public"])
+
+scala_library(
+    name = "brokentarget",
+    srcs = ["//depfixer/src/main/java/com/wix/bazel/depfixer/brokentarget:sources"],
+    deps = [
+        "@com_fasterxml_jackson_core_jackson_core",
+        "@com_fasterxml_jackson_core_jackson_databind",
+        "@wix_ci//wix-bazel-artifact-publisher/bazel-bep/bazel-bep-processor/src/main/scala/com/wixpress/ci/bazel/bep/processor",
+        "@wix_ci//wix-bazel-artifact-publisher/bazel-bep/bazel-bep-proto-model/src/main/proto:proto_scala",
+    ],
+)
+
+filegroup(
+    name = "sources",
+    srcs = glob(["*.java"]),
+    visibility = ["__pkg__"],
+)
