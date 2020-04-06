@@ -1,0 +1,14 @@
+package(default_visibility = ["//visibility:public"])
+
+scala_library(
+    name = "depfixer",
+    srcs = glob(["*.java"]),
+    deps = [
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/analyze",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/brokentarget",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/configuration",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/impl",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/process",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/repo",
+    ],
+)
