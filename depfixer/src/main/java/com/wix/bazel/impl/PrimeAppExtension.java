@@ -35,8 +35,8 @@ public class PrimeAppExtension extends TargetsStoreExtension {
     }
 
     @Override
-    public String getAttributeForTarget(boolean testOnlyTarget) {
-        return testOnlyTarget? "deps_test" : "deps";
+    public String getAttributeForTarget(String target, boolean testOnlyTarget) {
+        return testOnlyTarget && targetsToPrimeAppMap.containsKey(target)? "deps_test" : "deps";
     }
 
     private Map<String, String> getPrimeAppTargets() {

@@ -48,9 +48,9 @@ public class TargetsStore extends TargetsStoreExtension implements Serializable 
     }
 
     @Override
-    public String getAttributeForTarget(boolean testOnlyTarget) {
+    public String getAttributeForTarget(String target, boolean testOnlyTarget) {
         return extensionList.stream()
-                .map(e -> e.getAttributeForTarget(testOnlyTarget))
+                .map(e -> e.getAttributeForTarget(target, testOnlyTarget))
                 .findFirst()
                 .orElse("deps");
     }

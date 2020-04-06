@@ -14,6 +14,6 @@ public abstract class TargetsStoreExtension {
     }
 
     public abstract String getRealTargetName(String target);
-    public abstract String getAttributeForTarget(boolean testOnlyTarget);
+    public abstract String getAttributeForTarget(String target, boolean testOnlyTarget);
     public abstract void update();
 }
