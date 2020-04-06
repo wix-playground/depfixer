@@ -1,0 +1,13 @@
+package(default_visibility = ["//visibility:public"])
+
+scala_library(
+    name = "impl",
+    srcs = [":sources"],
+    deps = [
+        "//depfixer/src/main/java/com/wix/bazel/configuration",
+        "//depfixer/src/main/java/com/wix/bazel/process",
+        "//depfixer/src/main/java/com/wix/bazel/repo",
+    ],
+)
+
+sources()

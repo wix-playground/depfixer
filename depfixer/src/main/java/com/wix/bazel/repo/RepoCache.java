@@ -7,7 +7,7 @@ import java.util.*;
 
 public class RepoCache implements Serializable  {
     private Map<String, TargetsHolder> map = new HashMap<>();
-    private TargetsStore targetsStore;
+    private transient TargetsStore targetsStore;
     private Map<String, Set<String>> jarClasses = new HashMap<>();
 
     public RepoCache(TargetsStore targetsStore) {

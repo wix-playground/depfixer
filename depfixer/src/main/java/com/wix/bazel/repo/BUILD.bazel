@@ -5,6 +5,7 @@ scala_library(
     srcs = ["//depfixer/src/main/java/com/wix/bazel/repo:sources"],
     deps = [
         "//depfixer/src/main/java/com/wix/bazel/brokentarget",
+        "//depfixer/src/main/java/com/wix/bazel/configuration",
         "//depfixer/src/main/java/com/wix/bazel/process",
         "//depfixer/src/main/resources",
         "@wix_ci//labeldex/labeldex-common",

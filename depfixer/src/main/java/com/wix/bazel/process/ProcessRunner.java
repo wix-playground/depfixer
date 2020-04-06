@@ -3,19 +3,23 @@ package com.wix.bazel.process;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class ProcessRunner {
     private ProcessRunner() {}
 
     private static ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-    public static ExecuteResult execute(Path path, String... args) throws IOException, InterruptedException {
+    public static ExecuteResult execute(Path path, String... args)
+            throws IOException, InterruptedException, ExecutionException {
         return execute(path, Collections.emptyMap(), args);
     }
 
-    public static ExecuteResult execute(Path path, Map<String, String> env, String... args) throws IOException, InterruptedException {
+    public static ExecuteResult execute(Path path, Map<String, String> env, String... args)
+            throws IOException, InterruptedException, ExecutionException {
         ProcessBuilder builder = new ProcessBuilder();
 
         builder.command(args);
@@ -28,16 +32,17 @@ public class ProcessRunner {
         StreamGobbler stderr =
                 new StreamGobbler(process.getErrorStream(), System.err::println);
 
-        executorService.submit(stdout);
-        executorService.submit(stderr);
+        Future<String> stdoutF = executorService.submit(stdout);
+        Future<String> stderrF = executorService.submit(stderr);
 
         int exitCode = process.waitFor();
+
         ExecuteResult res = new ExecuteResult();
 
         res.command = String.join(" ", Arrays.asList(args));
         res.exitCode = exitCode;
-        res.stderr = stderr.getStream();
-        res.stdout = stdout.getStream();
+        res.stderr = stderrF.get();
+        res.stdout = stdoutF.get();
 
         return res;
     }
