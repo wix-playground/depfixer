@@ -56,13 +56,11 @@ public class DepFixer {
 
     private AbstractBazelIndexer externalBazelIndexer, internalBazelIndexer;
 
-    public void fix(String[] args) throws IOException, InterruptedException, ExecutionException {
-        configuration = new Configuration(
-                CliSource.parseCliParameters(args),
-                new UserConfigSource(),
-                new ClasspathSource()
-        );
+    public DepFixer(Configuration configuration) {
+        this.configuration = configuration;
+    }
 
+    public void fix() throws IOException, InterruptedException, ExecutionException {
         repoPath = resolveRepoPath(configuration.getRepoPath());
         targetsToBuild = resolveTargetsToBuild(repoPath, configuration.getTargets());
 
