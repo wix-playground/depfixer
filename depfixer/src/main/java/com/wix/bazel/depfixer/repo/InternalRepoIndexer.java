@@ -1,5 +1,7 @@
 package com.wix.bazel.depfixer.repo;
 
+import com.wix.bazel.depfixer.cache.TargetsStore;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

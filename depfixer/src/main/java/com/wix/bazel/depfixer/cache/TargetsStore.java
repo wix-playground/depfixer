@@ -1,4 +1,4 @@
-package com.wix.bazel.depfixer.repo;
+package com.wix.bazel.depfixer.cache;
 
 import com.wix.bazel.depfixer.configuration.Configuration;
 

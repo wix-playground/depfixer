@@ -1,5 +1,7 @@
 package com.wix.bazel.depfixer.repo;
 
+import com.wix.bazel.depfixer.cache.RepoCache;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;

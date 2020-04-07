@@ -1,5 +1,7 @@
 package com.wix.bazel.depfixer.repo;
 
+import com.wix.bazel.depfixer.cache.RepoCache;
+import com.wix.bazel.depfixer.cache.TargetsStore;
 import com.wix.bazel.depfixer.process.ExecuteResult;
 import com.wix.bazel.depfixer.process.ProcessRunner;
 import org.eclipse.jgit.api.Git;

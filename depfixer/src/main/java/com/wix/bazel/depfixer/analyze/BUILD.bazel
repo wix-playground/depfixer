@@ -4,6 +4,7 @@ scala_library(
     name = "analyze",
     srcs = [":sources"],
     deps = [
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/cache",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/brokentarget",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/repo",
     ],

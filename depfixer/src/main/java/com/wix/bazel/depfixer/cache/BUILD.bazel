@@ -1,0 +1,9 @@
+java_library(
+    name = "cache",
+    srcs = glob(["*.java"]),
+    deps = [
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/configuration",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/brokentarget"
+    ],
+    visibility = ["//visibility:public"],
+)

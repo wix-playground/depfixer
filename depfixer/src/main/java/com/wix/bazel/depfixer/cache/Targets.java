@@ -1,4 +1,4 @@
-package com.wix.bazel.depfixer.repo;
+package com.wix.bazel.depfixer.cache;
 
 import java.util.Arrays;
 import java.util.Collections;

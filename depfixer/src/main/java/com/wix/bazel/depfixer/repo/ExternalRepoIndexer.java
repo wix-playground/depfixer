@@ -1,5 +1,7 @@
 package com.wix.bazel.depfixer.repo;
 
+import com.wix.bazel.depfixer.cache.TargetsStore;
+
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;

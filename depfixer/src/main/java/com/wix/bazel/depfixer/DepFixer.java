@@ -1,15 +1,15 @@
 package com.wix.bazel.depfixer;
 
-import com.wix.bazel.depfixer.Overrides;
 import com.wix.bazel.depfixer.analyze.*;
 import com.wix.bazel.depfixer.brokentarget.AbstractBrokenTargetExtractor;
 import com.wix.bazel.depfixer.brokentarget.BrokenTargetBepExtractor;
 import com.wix.bazel.depfixer.brokentarget.BrokenTargetData;
 import com.wix.bazel.depfixer.brokentarget.BrokenTargetExtractor;
-import com.wix.bazel.depfixer.configuration.ClasspathSource;
-import com.wix.bazel.depfixer.configuration.CliSource;
+import com.wix.bazel.depfixer.cache.ExternalCache;
+import com.wix.bazel.depfixer.cache.ExternalCacheFactory;
+import com.wix.bazel.depfixer.cache.RepoCache;
+import com.wix.bazel.depfixer.cache.TargetsStore;
 import com.wix.bazel.depfixer.configuration.Configuration;
-import com.wix.bazel.depfixer.configuration.UserConfigSource;
 import com.wix.bazel.depfixer.impl.PrimeAppExtension;
 import com.wix.bazel.depfixer.process.ExecuteResult;
 import com.wix.bazel.depfixer.process.ProcessRunner;
@@ -33,8 +33,7 @@ import static java.lang.System.exit;
 import static java.util.stream.Collectors.*;
 
 public class DepFixer {
-    private static final Pattern brokenFile =
-            Pattern.compile("(.+):\\d+: error:");
+    private static final Pattern brokenFile = Pattern.compile("(.+):\\d+: error:");
 
     private Set<String> addDepsInstructions = null;
     private Map<String, Set<String>> repoToInstructions = null;
@@ -48,16 +47,18 @@ public class DepFixer {
 
     private AnalyzerContext analyzerContext;
     private TargetAnalyzer targetAnalyzer;
-    private GlobalExternalCache externalCache;
+    private ExternalCache externalCache;
     private String workspaceName;
     private TargetsStore targetsStore;
     private int runLimit;
     private Configuration configuration;
+    private ExternalCacheFactory externalCacheFactory;
 
     private AbstractBazelIndexer externalBazelIndexer, internalBazelIndexer;
 
-    public DepFixer(Configuration configuration) {
+    public DepFixer(Configuration configuration, ExternalCacheFactory externalCacheFactory) {
         this.configuration = configuration;
+        this.externalCacheFactory = externalCacheFactory;
     }
 
     public void fix() throws IOException, InterruptedException, ExecutionException {
@@ -222,11 +223,7 @@ public class DepFixer {
                     targetsStore.update();
 
                     if (configuration.getLabeldexUrl() != null) {
-                        externalCache = new GlobalExternalCache(
-                                configuration.getLabeldexUrl(),
-                                targetsStore,
-                                workspaceName
-                        );
+                        externalCache = externalCacheFactory.create(workspaceName, targetsStore);
                     }
 
                     externalBazelIndexer = new ExternalRepoIndexer(

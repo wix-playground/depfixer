@@ -3,7 +3,7 @@ package com.wix.bazel.depfixer.impl;
 import com.wix.bazel.depfixer.configuration.Configuration;
 import com.wix.bazel.depfixer.process.ExecuteResult;
 import com.wix.bazel.depfixer.process.ProcessRunner;
-import com.wix.bazel.depfixer.repo.TargetsStoreExtension;
+import com.wix.bazel.depfixer.cache.TargetsStoreExtension;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;

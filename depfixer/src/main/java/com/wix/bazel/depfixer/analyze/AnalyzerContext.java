@@ -1,6 +1,6 @@
 package com.wix.bazel.depfixer.analyze;
 
-import com.wix.bazel.depfixer.repo.RepoCache;
+import com.wix.bazel.depfixer.cache.RepoCache;
 
 import java.nio.file.Path;
 import java.util.Map;
