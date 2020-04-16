@@ -1,10 +1,9 @@
 package com.wix.bazel.depfixer;
 
 import com.wix.bazel.depfixer.analyze.*;
-import com.wix.bazel.depfixer.brokentarget.AbstractBrokenTargetExtractor;
-import com.wix.bazel.depfixer.brokentarget.BrokenTargetBepExtractor;
 import com.wix.bazel.depfixer.brokentarget.BrokenTargetData;
 import com.wix.bazel.depfixer.brokentarget.BrokenTargetExtractor;
+import com.wix.bazel.depfixer.brokentarget.BrokenTargetExtractorFactory;
 import com.wix.bazel.depfixer.cache.ExternalCache;
 import com.wix.bazel.depfixer.cache.ExternalCacheFactory;
 import com.wix.bazel.depfixer.cache.RepoCache;
@@ -14,7 +13,9 @@ import com.wix.bazel.depfixer.impl.PrimeAppExtension;
 import com.wix.bazel.depfixer.process.ExecuteResult;
 import com.wix.bazel.depfixer.process.ProcessRunner;
 import com.wix.bazel.depfixer.process.RunWithRetries;
-import com.wix.bazel.depfixer.repo.*;
+import com.wix.bazel.depfixer.repo.AbstractBazelIndexer;
+import com.wix.bazel.depfixer.repo.ExternalRepoIndexer;
+import com.wix.bazel.depfixer.repo.InternalRepoIndexer;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,12 +54,17 @@ public class DepFixer {
     private int runLimit;
     private Configuration configuration;
     private ExternalCacheFactory externalCacheFactory;
+    private BrokenTargetExtractorFactory brokenTargetExtractorFactory;
 
     private AbstractBazelIndexer externalBazelIndexer, internalBazelIndexer;
 
-    public DepFixer(Configuration configuration, ExternalCacheFactory externalCacheFactory) {
+    public DepFixer(
+            Configuration configuration,
+            ExternalCacheFactory externalCacheFactory,
+            BrokenTargetExtractorFactory brokenTargetExtractorFactory) {
         this.configuration = configuration;
         this.externalCacheFactory = externalCacheFactory;
+        this.brokenTargetExtractorFactory = brokenTargetExtractorFactory;
     }
 
     public void fix() throws IOException, InterruptedException, ExecutionException {
@@ -118,12 +124,8 @@ public class DepFixer {
     }
 
 
-    private AbstractBrokenTargetExtractor initBrokenTargetExtractor(Path runPath, String stderr) {
-        if (configuration.isBepMode()) {
-            return new BrokenTargetBepExtractor(repoPath, analyzerContext.getBazelExternalPath(), runPath);
-        } else {
-            return new BrokenTargetExtractor(repoPath, analyzerContext.getBazelExternalPath(), stderr);
-        }
+    private BrokenTargetExtractor initBrokenTargetExtractor(Path runPath, String stderr) {
+        return brokenTargetExtractorFactory.create(repoPath, analyzerContext.getBazelExternalPath(), runPath, stderr);
     }
 
     private String resolveTargetsToBuild(Path repoPath, String targets) {
@@ -203,7 +205,7 @@ public class DepFixer {
             Path runPath = executionPath.resolve(String.format("run-%03d", analyzerContext.getRunNumber()));
             Files.createDirectories(runPath);
 
-            List<String> args = initArgs(runPath);
+            List<String> args = brokenTargetExtractorFactory.initArgs(runPath, targetsToBuild);
             ExecuteResult res = ProcessRunner.execute(repoPath, buildBazelCmd("build", args.toArray(new String[0])));
 
             Files.write(runPath.resolve("run.log"), res.stderr.getBytes());
@@ -243,7 +245,7 @@ public class DepFixer {
                             analyzerContext.getBazelExternalPath()
                     );
                 }
-                AbstractBrokenTargetExtractor targetExtractor = initBrokenTargetExtractor(runPath, res.stderr);
+                BrokenTargetExtractor targetExtractor = initBrokenTargetExtractor(runPath, res.stderr);
                 RepoCache external = externalBazelIndexer.index();
                 RepoCache internal = internalBazelIndexer.index();
 
@@ -304,15 +306,6 @@ public class DepFixer {
         } while (true);
 
         return 0;
-    }
-
-    private List<String> initArgs(Path path) {
-        List<String> args = new ArrayList<>(Arrays.asList("-k", "--build_tag_filters=-deployable"));
-        if (configuration.isBepMode()) {
-            args.add("--build_event_json_file=" + path.toString() + "/" + BrokenTargetBepExtractor.BEP_FILENAME);
-        }
-        args.add(targetsToBuild);
-        return args;
     }
 
     private void backtracking(String stderr, Set<String> instructions) throws IOException, InterruptedException, ExecutionException {
@@ -518,9 +511,9 @@ public class DepFixer {
     }
 
     private boolean addStrictDepsInstructionsAndApplyAll(String repoName,
-                                                                Map.Entry<String, Set<String>> repoNameWithItsInstructions,
-                                                                Path runPath,
-                                                                Map<String, List<String>> reposLogs)
+                                                         Map.Entry<String, Set<String>> repoNameWithItsInstructions,
+                                                         Path runPath,
+                                                         Map<String, List<String>> reposLogs)
             throws IOException, InterruptedException, ExecutionException {
         Path instructionsFile = runPath.resolve(String.format("repo_%s_deps.txt", repoName));
         Path repoLogFile = runPath.resolve(String.format("repo_%s.log", repoName));
@@ -663,7 +656,7 @@ public class DepFixer {
     }
 
     private TargetLocatorResponse getTargets(Set<String> classes,
-                                                    BrokenTargetData targetData, boolean forceGlobal) {
+                                             BrokenTargetData targetData, boolean forceGlobal) {
         Set<String> targets = new HashSet<>();
         Set<String> classesWithoutTarget = new HashSet<>();
 

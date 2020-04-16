@@ -1,15 +1,25 @@
 package(default_visibility = ["//visibility:public"])
 
 java_library(
-    name = "depfixer",
+    name = "runner",
     srcs = glob(["*.java"]),
     deps = [
-        "//depfixer/src/main/java/com/wix/bazel/depfixer/analyze",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/brokentarget",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/cache",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/configuration",
-        "//depfixer/src/main/java/com/wix/bazel/depfixer/impl",
-        "//depfixer/src/main/java/com/wix/bazel/depfixer/process",
-        "//depfixer/src/main/java/com/wix/bazel/depfixer/repo",
     ],
+)
+
+java_binary(
+    name = "depfixer_cli",
+    main_class = "com.wix.bazel.depfixer.runner.Main",
+    runtime_deps = [
+        ":runner",
+    ],
+)
+
+java_import(
+    name = "depfixer_cli_uber",
+    jars = [":depfixer_cli_deploy.jar"],
 )

@@ -24,6 +24,10 @@ public class BrokenTargetData {
         return start;
     }
 
+    public void setFullStream(String fullStream) {
+        this.fullStream = fullStream;
+    }
+
     public String getStream() {
         String s = fromBep ? fullStream : fullStream.substring(start, end);
         int idx = type.equals("proto") ?

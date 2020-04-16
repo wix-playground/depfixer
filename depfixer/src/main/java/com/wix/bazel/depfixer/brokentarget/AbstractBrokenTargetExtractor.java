@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-abstract public class AbstractBrokenTargetExtractor {
+abstract public class AbstractBrokenTargetExtractor implements BrokenTargetExtractor {
     private static Pattern failingFileAndTarget_K =
             Pattern.compile("ERROR: (?:[^:]+):\\d+:\\d+: Couldn't build file .+\\.jar: scala(?:\\sdeployable)? (.+) failed");
 
@@ -25,7 +25,7 @@ abstract public class AbstractBrokenTargetExtractor {
     private final Path repoPath, externalRepoPath;
 
 
-    AbstractBrokenTargetExtractor(Path repoPath, Path externalRepoPath) {
+    public AbstractBrokenTargetExtractor(Path repoPath, Path externalRepoPath) {
         this.repoPath = repoPath;
         this.externalRepoPath = externalRepoPath;
     }
@@ -52,10 +52,11 @@ abstract public class AbstractBrokenTargetExtractor {
     }
 
 
-    abstract Collection<BrokenTargetData> collectBrokenTargets(Pattern pattern, String type) throws IOException;
+    public abstract Collection<BrokenTargetData> collectBrokenTargets(Pattern pattern, String type) throws IOException;
 
-    protected BrokenTargetData createBrokenTarget(String stream, String type, Matcher matcher) {
+    protected BrokenTargetData createBrokenTarget(String stream, String type, Matcher matcher, Boolean fromBep) {
         BrokenTargetData data = new BrokenTargetData();
+        data.fromBep = fromBep;
         data.targetName = matcher.group(1);
         data.targetName = data.targetName.split("\\s",2)[0];
 
