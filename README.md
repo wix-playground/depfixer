@@ -1,3 +1,5 @@
+###### Disclaimer: this is a proof of concept (POC) code, use at your own risk.
+
 # TL;DR  
 `DepFixer` is a dependencies fixing tool.
 
