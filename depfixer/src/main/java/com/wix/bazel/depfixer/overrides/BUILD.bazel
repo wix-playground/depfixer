@@ -1,0 +1,12 @@
+package(default_visibility = ["//visibility:public"])
+
+java_library(
+    name = "overrides",
+    srcs = [":sources"],
+)
+
+filegroup(
+    name = "sources",
+    srcs = glob(["*.java"]),
+    visibility = ["__pkg__"],
+)

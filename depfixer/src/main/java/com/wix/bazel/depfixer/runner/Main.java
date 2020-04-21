@@ -7,6 +7,7 @@ import com.wix.bazel.depfixer.brokentarget.TextBrokenTargetExtractor;
 import com.wix.bazel.depfixer.configuration.CliSource;
 import com.wix.bazel.depfixer.configuration.Configuration;
 import com.wix.bazel.depfixer.configuration.UserConfigSource;
+import com.wix.bazel.depfixer.overrides.NoOverrides;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,6 +38,7 @@ public class Main {
 
         new DepFixer(
                 configuration,
+                new NoOverrides(),
                 null,
                 brokenTargetExtractorFactory
         ).fix();

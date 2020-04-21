@@ -8,6 +8,7 @@ java_library(
         "//depfixer/src/main/java/com/wix/bazel/depfixer/brokentarget",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/cache",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/configuration",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/overrides",
     ],
 )
 

@@ -10,6 +10,7 @@ import com.wix.bazel.depfixer.cache.RepoCache;
 import com.wix.bazel.depfixer.cache.TargetsStore;
 import com.wix.bazel.depfixer.configuration.Configuration;
 import com.wix.bazel.depfixer.impl.PrimeAppExtension;
+import com.wix.bazel.depfixer.overrides.Overrides;
 import com.wix.bazel.depfixer.process.ExecuteResult;
 import com.wix.bazel.depfixer.process.ProcessRunner;
 import com.wix.bazel.depfixer.process.RunWithRetries;
@@ -58,11 +59,15 @@ public class DepFixer {
 
     private AbstractBazelIndexer externalBazelIndexer, internalBazelIndexer;
 
+    private Overrides overrides;
+
     public DepFixer(
             Configuration configuration,
+            Overrides overrides,
             ExternalCacheFactory externalCacheFactory,
             BrokenTargetExtractorFactory brokenTargetExtractorFactory) {
         this.configuration = configuration;
+        this.overrides = overrides;
         this.externalCacheFactory = externalCacheFactory;
         this.brokenTargetExtractorFactory = brokenTargetExtractorFactory;
     }
@@ -661,7 +666,7 @@ public class DepFixer {
         Set<String> classesWithoutTarget = new HashSet<>();
 
         for (String cls : classes) {
-            cls = Overrides.overrideClass(cls);
+            cls = overrides.overrideClass(cls);
             Set<String> targetsForClass = getTargetsForClass(cls, targetData);
 
             targets.addAll(targetsForClass);
@@ -717,7 +722,7 @@ public class DepFixer {
 
     private Set<String> getTargetsForClass(String cls, BrokenTargetData targetData) {
         Set<String> targets = new HashSet<>();
-        String target = Overrides.overrideClassToTarget(cls);
+        String target = overrides.overrideClassToTarget(cls);
 
         if (target == null)
             target = analyzerContext.getInternalCache().get(cls, targetData, analyzerContext.getTargetDepsHistory());

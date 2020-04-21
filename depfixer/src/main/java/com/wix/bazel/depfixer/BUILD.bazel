@@ -9,6 +9,7 @@ java_library(
         "//depfixer/src/main/java/com/wix/bazel/depfixer/cache",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/configuration",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/impl",
+        "//depfixer/src/main/java/com/wix/bazel/depfixer/overrides",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/process",
         "//depfixer/src/main/java/com/wix/bazel/depfixer/repo",
     ],
